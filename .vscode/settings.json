@@ -1,0 +1,29 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "editor.tokenColorCustomizations": {
+    "keywords": "#bc74ff",
+    "variables": "#99AAB5",
+    "textMateRules": [{
+      "scope": "",
+        "settings": {
+            "foreground":"#99AAB5"
+          }
+        }
+      ]
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.python"
+  },
+  "python.pythonPath": "C:\\Program Files\\Python39\\python.exe",
+  "python.formatting.provider": "black",
+  "workbench.colorTheme": "One Dark Pro",
+  "workbench.preferredDarkColorTheme": "One Dark Pro",
+  "workbench.colorCustomizations": {
+
+
+
+  }
+}
