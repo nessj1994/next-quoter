@@ -9,19 +9,24 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@heroicons/react": "^1.0.4",
     "@reduxjs/toolkit": "^1.6.2",
+    "@types/react-table": "^7.7.6",
     "axios": "^0.23.0",
     "bcryptjs": "^2.4.3",
     "bulma-calendar": "^6.1.14",
     "formik": "^2.2.9",
     "fs": "^0.0.1-security",
     "js-cookie": "^3.0.1",
+    "match-sorter": "^6.3.1",
+    "moment": "^2.29.1",
     "next": "11.1.2",
     "popper.js": "^1.16.1",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-hot-toast": "^2.1.1",
     "react-redux": "^7.2.5",
+    "react-table": "^7.7.0",
     "sass": "^1.42.1"
   },
   "devDependencies": {

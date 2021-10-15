@@ -1,10 +1,10 @@
 import { ReactNode, Dispatch } from 'react';
-import { History } from 'history';
+import { Router } from 'next/router';
 import { AxiosResponse } from 'axios';
 
 interface IAuthProps {
   children: ReactNode;
-  navigate: History;
+  navigate: Router;
   customPropertyNamespace: string;
 }
 
@@ -21,7 +21,7 @@ export type AuthContextState = {
   dispatch: AuthDispatch;
   callbackDomain: string;
   customPropertyNamespace: string;
-  navigate: History | null;
+  navigate: Router | null;
   auth: Auth | null;
 };
 

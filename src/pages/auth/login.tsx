@@ -7,7 +7,7 @@ import type {
 import bcrypt from 'bcryptjs';
 import { useRouter } from 'next/router';
 import { Form, Formik, Field } from 'formik';
-import useAuth from '../../authLib/hooks/useAuth';
+import useAuth from '../../services/authLib/hooks/useAuth';
 import axios from 'axios';
 import { login } from '../api/users/users';
 const Login: NextPage = ({ message }) => {
@@ -21,7 +21,7 @@ const Login: NextPage = ({ message }) => {
     bcrypt
       .hash(extraSalty + pass, '$2a$10$kdIGcQMl8inZeZTJIBZxy.;')
       .then(async (hash) => {
-        let stuff = await login({ email: user, password: hash });
+        let stuff = await auth.login(user, hash);
 
         console.log(stuff);
 
@@ -30,6 +30,11 @@ const Login: NextPage = ({ message }) => {
         }
       });
   };
+
+  // const onKeyDown = (keyEvent) => {
+  //   if (keyEvent.getModifierState('CapsLock')) {
+
+  // };
 
   const initialVals = {};
   return (

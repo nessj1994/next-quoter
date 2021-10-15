@@ -1,0 +1,20 @@
+.resizer {
+  display: inline-block;
+  cursor: col-resize;
+  opacity: 0;
+  border-left: 1px solid black;
+  border-right: 1px solid black;
+  width: 3px;
+  top: 25%;
+  transition: all linear 100ms;
+  height: 50%;
+  position: absolute;
+  right: 0;
+  transform: translateX(50%);
+  z-index: 100;
+  touch-action: none;
+
+  &.isResizing {
+    opacity: 1;
+  }
+}

@@ -64,7 +64,7 @@ export const fetchQuotes =
     const response = await axios.get(
       `http://localhost:8082/inferno/v1/quotes/headers/`,
       {
-        params: { custID, csr, age: '2021-05-01', includeDeleted },
+        params: { custID, csr, age: '2021-09-01', includeDeleted },
         paramsSerializer: (params) => {
           // "Hide" the `custID` param
           return Object.entries({ ...params })

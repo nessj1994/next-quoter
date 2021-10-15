@@ -14,6 +14,7 @@ import {
   User,
 } from './types';
 import toast from 'react-hot-toast';
+import Router from 'next/router';
 // import { handleAuthResult } from '../hooks/useAuth';
 
 const initState = (): AuthState => {
@@ -85,7 +86,7 @@ export const AuthProvider: AuthProviderInterface = (props: AuthProps) => {
     if (error) {
       setError(null);
     }
-  }, [props.navigate?.location.pathname]);
+  }, [props.navigate?.pathName]);
 
   // First load check if we already
   useEffect(() => {
@@ -171,34 +172,36 @@ export const AuthProvider: AuthProviderInterface = (props: AuthProps) => {
           expiresAt,
         },
       });
+      console.log('User Authenticated... \n');
+      console.log('Set state with dispatch now... \n');
+
       return user;
     }
   }
 
   async function logout() {
-    axios
-      .post(
-        `${process.env.SERVER_HOST}/inferno/v1/users/logout`,
-        {},
-        {
-          withCredentials: true,
-          validateStatus(status: any) {
-            return status < 400; // Resolve only if the status code is less than 500
-          },
+    let resp = await axios.post(
+      `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/users/logout`,
+      {},
+      {
+        withCredentials: true,
+        validateStatus(status: any) {
+          return status < 400; // Resolve only if the status code is less than 500
         },
-      )
-      .then((resp) => {
-        console.log('Logged out', resp);
-        dispatch({
-          type: AuthActionTypes.AUTH_USER_LOGOUT,
-          payload: {
-            authResult: false,
-            expiresAt: new Date('01/01/1999'),
-            user: {},
-          },
-        });
-        props.navigate.push('/auth/login');
+      },
+    );
+    if (resp) {
+      console.log('Logged out', resp);
+      dispatch({
+        type: AuthActionTypes.AUTH_USER_LOGOUT,
+        payload: {
+          authResult: false,
+          expiresAt: new Date('01/01/1999'),
+          user: {},
+        },
       });
+      props.navigate.push('/auth/login');
+    }
   }
 
   async function toggleAdminMode(enabled: boolean) {
