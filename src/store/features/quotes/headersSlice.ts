@@ -3,15 +3,19 @@ import {
   createEntityAdapter,
   createSelector,
 } from '@reduxjs/toolkit';
-import axios from 'axios';
+import initAPIConnection from 'services/api/apiConnector';
+import { AxiosResponse } from 'axios';
 // import moment from 'moment';
 import { QuoteHeaderState, QuoteHeader } from './types';
 // eslint-disable-next-line import/no-cycle
 import { RootState } from '../../store';
+import moment from 'moment';
+
+const api = initAPIConnection({});
 
 const quotesAdapter = createEntityAdapter<QuoteHeader>({
-  selectId: (quote) => quote.QuoteID ?? 0,
-  sortComparer: (a, b) => b.QuoteDate.localeCompare(a.QuoteDate),
+  selectId: (quote) => quote.quote_id ?? 0,
+  sortComparer: (a, b) => b.quote_date.localeCompare(a.quote_date),
 });
 
 const initialState = quotesAdapter.getInitialState<QuoteHeaderState>({
@@ -39,10 +43,12 @@ const quoteSlice = createSlice({
     updateQuote: quotesAdapter.upsertOne,
     setEditing: (state, action) => {
       // Set the currently selected quote to edit
-
       if (action.payload === null) state.currentQuote = null;
-      else if (state.entities[action.payload.QuoteID])
-        state.currentQuote = state.entities[action.payload.QuoteID]!;
+      else if (state.entities[action.payload.quote_id]) {
+        console.log('matched');
+        console.log('Action: ', action.payload);
+        state.currentQuote = state.entities[action.payload.quote_id]!;
+      }
     },
     ageChoiceUpdated: (state, action) => {
       state.ageSelection = action.payload.age;
@@ -54,61 +60,89 @@ const quoteSlice = createSlice({
 
 // Thunks
 export const fetchQuotes =
-  (custID: string, csr = '', age = 365 * 2, includeDeleted = false) =>
+  (customer_id: string, csr = '', age = 365 * 2, includeDeleted = false) =>
   async (dispatch: any) => {
-    // const convertedAge = moment().subtract(age, 'days').format('YYYY-MM-DD');
-
+    const convertedAge = moment()
+      .subtract(age, 'days')
+      .format('YYYY-MM-DD HH:MM:ss');
+    console.log(convertedAge);
     dispatch(setLoading(true));
 
     await dispatch(emptyQuoteList());
-    const response = await axios.get(
-      `http://localhost:8082/inferno/v1/quotes/headers/`,
-      {
-        params: { custID, csr, age: '2021-09-01', includeDeleted },
-        paramsSerializer: (params) => {
-          // "Hide" the `custID` param
-          return Object.entries({ ...params })
-            .map(([key, value]) => `${key}=${value}`)
-            .join('&');
+    const response: AxiosResponse<{ results: Array<QuoteHeader> }, any> =
+      await api.get(
+        `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/?cust_id=${customer_id}&quote_date__gte=${convertedAge}&csr=${csr}`,
+        {
+          // headers: {
+          //   Authorization: 'Token 1f9d60567da79305ab2f17aea29fdaa9e2dca798',
+          // },
+          withCredentials: true,
         },
-        withCredentials: true,
-      },
-    );
-    console.log(response.data);
-    await dispatch(loadQuotes(response.data));
+      );
+    console.log(response.data?.results);
+    await dispatch(loadQuotes(response.data?.results));
     dispatch(setLoading(false));
-    return response.data;
+    return response.data.results;
+  };
+
+export const markQuoteDeleted =
+  (quote: QuoteHeader, custID: number) => async (dispatch: any) => {
+    console.log(`hello, ${custID}`);
+
+    const response = await api.post(
+      `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/toggle_deleted`,
+      { setDeleted: true, quoteNum: quote.quote_number, custID: custID },
+    );
+    dispatch(deleteQuote(quote.quote_id));
+
+    return response;
   };
 
 export const changeAgeChoice = (age: number) => async (dispatch: any) => {
   dispatch(changeAgeChoice(age));
 };
 
-export const updateHeader = (updated: QuoteHeader) => async (dispatch: any) => {
-  const response = await axios.post(
-    `${process.env.SERVER_HOST}/inferno/v1/quotes/headers/update`,
-    updated,
-    { withCredentials: true },
-  );
+type RequireAtLeastOne<T> = {
+  [K in keyof T]-?: Required<Pick<T, K>> &
+    Partial<Pick<T, Exclude<keyof T, K>>>;
+}[keyof T];
+export const updateHeader =
+  (updated: RequireAtLeastOne<QuoteHeader>) => async (dispatch: any) => {
+    console.log(updated);
+    let response;
+    if (updated.quote_id) {
+      response = await api.patch(
+        `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/${updated.quote_id}/`,
+        updated,
+        { withCredentials: true },
+      );
+    } else {
+      response = await api.post(
+        `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/`,
+        updated,
+        { withCredentials: true },
+      );
+    }
 
-  if (response.data) {
-    dispatch(updateQuote(response.data[0]));
-    dispatch(setEditing(response.data[0]));
-  }
+    if (response.data) {
+      dispatch(updateQuote(response.data));
+      dispatch(setEditing(response.data));
+    }
 
-  return response;
-};
+    return response;
+  };
 
 export const createNewQuote =
   (QuoteNum: string, CustomerCustID: number, Username: string) =>
   async (dispatch: any) => {
-    const response = await axios.post(
+    const response = await api.post(
       `${process.env.SERVER_HOST}/inferno/v1/quotes/headers/create_new`,
       {
         QuoteNum,
         CustomerCustID,
         Username,
       },
+      { withCredentials: true },
     );
 
     if (response.data) {
@@ -126,12 +160,16 @@ export const quoteHeaderSelectors = quotesAdapter.getSelectors(
   (state: RootState) => state.quotes,
 );
 
-export const editing = (state: RootState): QuoteHeader | {} =>
+export const getQuotesState = (state: RootState): QuoteHeaderState => {
+  return state.quotes;
+};
+
+export const editing = (state: RootState): QuoteHeader | Partial<QuoteHeader> =>
   state.quotes.currentQuote;
 
 export const selectQuoteByQuoteNum = (which: string) => {
   return createSelector(quoteHeaderSelectors.selectAll, (items) => {
-    return items.find((item) => item.QuoteNumber === which);
+    return items.find((item) => item.quote_number === which);
   });
 };
 

@@ -1,0 +1,12 @@
+.btn-transparent {
+  background-color: transparent;
+  &:hover,
+  &:focus {
+    background-color: transparent;
+  }
+}
+
+.file-drop {
+  position: absolute !important;
+  overflow: visible !important;
+}

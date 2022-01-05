@@ -1,34 +1,45 @@
-import type {
-  GetServerSideProps,
-  GetServerSidePropsContext,
-  GetServerSidePropsResult,
-  NextPage,
-} from 'next';
+import type { NextPage } from 'next';
 import bcrypt from 'bcryptjs';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { Form, Formik, Field } from 'formik';
 import useAuth from '../../services/authLib/hooks/useAuth';
-import axios from 'axios';
-import { login } from '../api/users/users';
-const Login: NextPage = ({ message }) => {
-  const auth = useAuth();
+import Link from 'next/link';
+import { useSession, signIn } from 'next-auth/react';
+import { useEffect } from 'react';
+import api from 'services/api/apiConnector';
+import { AxiosResponse } from 'axios';
+import Cookies from 'js-cookie';
+
+const Login: NextPage = (pageProps) => {
+  const { data: session } = useSession();
   const router = useRouter();
-  const authenticateUser = async () => {};
 
-  const handleIt = async (user: string, pass: string) => {
-    const extraSalty = user.substr(0, 2) + user.substr(user.length - 2, 2);
+  useEffect(() => {
+    if (session?.user && session?.expires > Date.now().toString()) {
+      router.push('/quotes/list');
+    }
+  });
 
-    bcrypt
-      .hash(extraSalty + pass, '$2a$10$kdIGcQMl8inZeZTJIBZxy.;')
-      .then(async (hash) => {
-        let stuff = await auth.login(user, hash);
+  useEffect(() => {}, []);
 
-        console.log(stuff);
+  const handleSubmit = async (e: { Username: string; Password: string }) => {
+    const { Username, Password } = e;
 
-        if (stuff) {
-          router.push('/quotes/list');
-        }
-      });
+    const extraSalty =
+      Username.substr(0, 2) + Username.substr(Username.length - 2, 2);
+    console.log(e);
+
+    // bcrypt
+    //   .hash(extraSalty + Password, '$2a$10$kdIGcQMl8inZeZTJIBZxy.;')
+    //   .then(async (hash) => {
+
+    //   });
+    await signIn('credentials', {
+      username: Username.toLowerCase(),
+      password: Password,
+      callbackUrl: '/quotes/list',
+    });
   };
 
   // const onKeyDown = (keyEvent) => {
@@ -38,77 +49,85 @@ const Login: NextPage = ({ message }) => {
 
   const initialVals = {};
   return (
-    <div className="container mx-auto">
-      <Formik
-        enableReinitialize
-        initialValues={initialVals}
-        validate={() => {}}
-        onSubmit={(values, { setSubmitting }) => {
-          //   console.log(values);
-          //   setSubmitting(true);
-          //   handleSave(values);
-          //   setSubmitting(false);
-        }}
-      >
-        {({ errors, isSubmitting, handleSubmit, values, handleChange }) => (
-          <div className="container">
-            <div className="mx-auto text-center">
-              <h1 className="font-bold">Welcome</h1>
-            </div>
-            <div className="mx-auto  w-full max-w-xs">
-              <Form className="bg-gray-300 shadow-md rounded px-8 pt-6 pb-8 mb-4">
-                <div className="mb-4">
-                  <label
-                    className="block text-gray-700 text-sm font-bold mb-2"
-                    htmlFor="username"
-                  >
-                    Username
-                  </label>
-                  <Field
-                    className="shadow border rounded w-full"
-                    type="input"
-                    id="username"
-                    name="Username"
-                  />
+    <div className="flex flex-col items-center content-center justify-end flex-1 w-4/5 mx-auto md:px-64 md:py-48 md:mx-0">
+      <Image
+        src="/we_do_imPossible_b.jpg"
+        layout="fill"
+        sizes="100%"
+        height="2048"
+        width="2048"
+        alt="bg_we-do-the-imPossible"
+      />
+      <div className="z-50 flex flex-col items-center w-4/5 py-16 mr-4 bg-white border rounded-lg shadow-md opacity-95">
+        <Formik
+          enableReinitialize
+          initialValues={initialVals}
+          validate={() => {}}
+          onSubmit={handleSubmit}
+        >
+          {({ errors, isSubmitting, handleSubmit, values, handleChange }) => (
+            <div className="flex flex-col flex-1 w-3/4 h-full gap-12 ">
+              <div className="flex flex-col gap-3">
+                <h3 className="flex text-3xl font-bold text-nowrap text-porter">
+                  Ready to Quote?
+                </h3>
+                <div>
+                  <h2 className="text-3xl font-semibold text-gray-700">
+                    Sign in
+                  </h2>
+                  <div className="flex flex-row gap-1">
+                    <p>New user? | </p>
+                    <Link href="/auth/register" passHref>
+                      <p className="text-porter-accent"> Register here! </p>
+                    </Link>
+                  </div>
                 </div>
-                <div className="columns is-gapless">
-                  <label
-                    className="block text-gray-700 text-sm font-bold mb-2"
-                    htmlFor="password"
-                  >
-                    Password
-                  </label>
-                  <Field
-                    as="input"
-                    className="shadow appearance-none border rounded w-full"
-                    type="password"
-                    id="password"
-                    name="Password"
-                  />
+              </div>
+              <Form className="flex flex-col flex-1 gap-16">
+                <div>
+                  <div className="mb-4">
+                    <label
+                      className="block mb-2 font-bold text-gray-700 text-md"
+                      htmlFor="username"
+                    >
+                      Username
+                    </label>
+                    <Field
+                      className="w-full border rounded shadow"
+                      type="input"
+                      id="username"
+                      name="Username"
+                    />
+                  </div>
+                  <div className="columns is-gapless">
+                    <label
+                      className="block mb-2 text-sm font-bold text-gray-700"
+                      htmlFor="password"
+                    >
+                      Password
+                    </label>
+                    <Field
+                      as="input"
+                      className="w-full border rounded shadow appearance-none"
+                      type="password"
+                      id="password"
+                      name="Password"
+                    />
+                  </div>
                 </div>
+
                 <button
                   disabled={isSubmitting}
-                  className="bg-blue-400 hover:bg-blue-700 hover:rotate-90"
-                  onClick={(e: any) => {
-                    e.preventDefault();
-                    const password = document.getElementById(
-                      'password',
-                    )! as HTMLInputElement;
-                    const username = document.getElementById(
-                      'username',
-                    )! as HTMLInputElement;
-                    if (password.value) {
-                      handleIt(username.value, password.value);
-                    }
-                  }}
+                  className="w-2/5 mx-auto text-white rounded-full bg-porter hover:bg-porter-light"
+                  type="submit"
                 >
                   Login
                 </button>
               </Form>
             </div>
-          </div>
-        )}
-      </Formik>
+          )}
+        </Formik>
+      </div>
     </div>
   );
 };

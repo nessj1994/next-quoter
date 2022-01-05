@@ -106,23 +106,25 @@ export const AuthProvider: AuthProviderInterface = (props: AuthProps) => {
   // Declare functions that need used by custom hook
   async function authenticateUser(username: string, password: string) {
     try {
-      let resp = await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/users/login`,
-        { Username: `${username}`, Password: `${password}` },
-        {
-          withCredentials: true,
-        },
-      );
+      // // let resp = await axios.post(
+      // //   `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/users/login`,
+      // //   { Username: `${username}`, Password: `${password}` },
+      // //   {
+      // //     withCredentials: true,
+      // //   },
 
-      if (resp) {
-        console.log(resp);
-        if (!resp.data.Username) {
-          throw resp; // Throw the response to our catch block
-        }
+      // // );
 
-        // We're good to go. Return the data from our response
-        return resp;
-      }
+      // if (resp) {
+      //   console.log(resp);
+      //   if (!resp.data.Username) {
+      //     throw resp; // Throw the response to our catch block
+      //   }
+
+      //   // We're good to go. Return the data from our response
+      //   return resp;
+      // }
+      console.log('Oops. wrong login');
     } catch (err: any) {
       // We have a problem
       if (err.response) {

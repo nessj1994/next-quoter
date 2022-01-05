@@ -1,20 +1,22 @@
-@import '../../../styles/colors';
+// .list-group {
+//   & > .list-header {
+//     background-color: map-get($theme-colors, primary);
+//   }
+// }
 
-.list-group {
-  & > .list-header {
-    background-color: map-get($theme-colors, primary);
-  }
-}
+// .list-header {
+//   & > div > h4 {
+//     color: white;
+//   }
+// }
 
-.list-header {
-  & > div > h4 {
-    color: white;
-  }
-}
+// .offcanvas {
+//   max-width: 350px;
+//   width: 15%;
+//   min-width: 85px;
+//   visibility: visible;
+// }
 
-.offcanvas {
-  max-width: 350px;
-  width: 15%;
-  min-width: 85px;
-  visibility: visible;
+.nav-item {
+  @apply block px-4 py-2 mt-2 text-sm font-semibold  text-porter duration-300 rounded-lg border border-porter-light hover:bg-porter hover:text-white;
 }

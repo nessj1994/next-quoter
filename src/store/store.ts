@@ -9,11 +9,10 @@ import createRootReducer from './reducers';
 const rootReducer = createRootReducer();
 // const router = applyMiddleware(routerMiddleware(history));
 
-function configureAppStore(preloadedState?: RootState) {
+function makeStore() {
   const store = configureStore({
     reducer: rootReducer,
     middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(),
-    preloadedState,
     enhancers: [],
   });
 
@@ -24,9 +23,11 @@ function configureAppStore(preloadedState?: RootState) {
   return store;
 }
 
-export const store = configureAppStore();
+const store = makeStore();
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof rootReducer>;
 // Inferred type: {quotes: QuotesState, lines: QuoteLineState, }
 export type AppDispatch = typeof store.dispatch;
+
+export default store;

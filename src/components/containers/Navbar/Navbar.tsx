@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
-// import * as Icons from 'react-bootstrap-icons';
 // import PriceCheck from '../../containers/PriceCheck';
 // import AdminSwitch from '../AdminSwitch';
 import Link from 'next/link';
@@ -19,18 +18,23 @@ import {
   ArrowRightIcon,
   DocumentAddIcon,
   FolderOpenIcon,
+  UserIcon,
+  CogIcon,
   LogoutIcon,
   MenuIcon,
+  HomeIcon,
+  PlusIcon,
+  SearchIcon,
 } from '@heroicons/react/outline';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks/hooks';
-// import './styles.scss';
 import { useEffect } from 'react';
 import { emptyQuoteList } from 'store/features/quotes/headersSlice';
+import { signOut, useSession } from 'next-auth/react';
 
 const Navbar = (props: any) => {
   const current = useAppSelector(editing);
   const dispatch = useAppDispatch();
-  const auth = useAuth();
+  const { data: auth, status } = useSession();
   // const quoteHeaders = useQuoteHeaders();
   const [menuExpanded, setMenuExpanded] = useState(false);
   const [expandSearch, setExpandSearch] = useState(false);
@@ -40,7 +44,7 @@ const Navbar = (props: any) => {
   //   auth.toggleAdminMode(e.target.checked);
   // };
 
-  const handleQuoteSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQuoteSearch = () => {
     const searchFor = document.getElementById(
       'sidenav-user-search',
     ) as HTMLInputElement;
@@ -54,48 +58,55 @@ const Navbar = (props: any) => {
     searchFor.value = '';
   };
 
-  // useEffect(() => {
-  //   let mounted = true;
-
-  //   if (mounted) {
-  //   }
-
-  //   return () => {
-  //     mounted = false;
-  //   };
-  // }, [auth.state.isAdmin]);
+  console.log(props.session);
 
   return (
-    <>
-      <div className="flex flex-col w-full md:w-64 dark-mode:text-gray-200 bg-gray-100 flex-shrink-0 mr-3">
-        <div className="flex-shrink-0 px-8 py-4 flex flex-row items-center justify-between">
+    <nav className="sticky top-0 flex bg-white rounded-b-lg md:w-1/6 md:rounded-r-lg z-60">
+      <div className="flex flex-col flex-grow w-full gap-3 shadow-md md:w-1/6 md:rounded-r-lg ">
+        <div className="flex flex-row items-center justify-between flex-shrink-0 px-8 py-4">
           <Image
             className="d-none d-lg-inline img-fluid"
             src={PorterLogo}
             alt="Porter"
           />
           <button
-            className="md:hidden rounded-lg focus:outline-none focus:shadow-outline"
+            className="rounded-lg md:hidden focus:outline-none focus:shadow-outline"
             onClick={(e: any) => {
               setMenuExpanded(!menuExpanded);
             }}
           >
-            <MenuIcon className="h-5 w-5" />
+            <MenuIcon className="w-5 h-5 print:hidden" />
           </button>
         </div>
         <ul
-          className={`flex-grow ${
+          className={`flex flex-col flex-grow  ${
             menuExpanded ? 'visible' : 'hidden'
-          } md:block px-4 pb-4 md:pb-0 md:overflow-y-auto`}
+          } md:inline-flex md:h-full px-4 pb-4 md:pb-0 `}
           id="menu"
         >
-          <li className="">
-            <a href="#" className="text-truncate">
-              <i className="fs-5 bi-house"></i>
-              <span className="block px-4 py-2 mt-2 text-sm font-semibold text-gray-900 bg-gray-200 rounded-lg dark-mode:bg-gray-700 dark-mode:hover:bg-gray-600 dark-mode:focus:bg-gray-600 dark-mode:focus:text-white dark-mode:hover:text-white dark-mode:text-gray-200 hover:text-gray-900 focus:text-gray-900 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:shadow-outline">
-                Home
-              </span>
-            </a>
+          <li>
+            <div className="row align-items-center d-flex w-100">
+              <div className="col-auto">
+                <Link href="/quotes/list" passHref>
+                  <a
+                    onClick={() => {
+                      dispatch(
+                        fetchQuotes(
+                          auth?.user?.customer_id,
+                          auth?.user.username,
+                          90,
+                        ),
+                      );
+                    }}
+                  >
+                    <span className="nav-item">
+                      <FolderOpenIcon className="inline w-5 h-5 mr-3" />
+                      My Quotes
+                    </span>
+                  </a>
+                </Link>
+              </div>
+            </div>
           </li>
           {/* {auth.state.isAdmin ? ( */}
           <li
@@ -109,12 +120,13 @@ const Navbar = (props: any) => {
           >
             <div className="justify-content-between">
               <Link href="#" passHref>
-                <span className="block px-4 py-2 mt-2 text-sm font-semibold text-gray-900 bg-gray-200 rounded-lg dark-mode:bg-gray-700 dark-mode:hover:bg-gray-600 dark-mode:focus:bg-gray-600 dark-mode:focus:text-white dark-mode:hover:text-white dark-mode:text-gray-200 hover:text-gray-900 focus:text-gray-900 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:shadow-outline">
+                <span className="nav-item">
+                  <SearchIcon className="inline w-5 h-5 mr-3" />
                   Search
                   {expandSearch ? (
-                    <ArrowDownIcon className="inline ml-3 h-5 w-5" />
+                    <ArrowDownIcon className="inline w-5 h-5 ml-3" />
                   ) : (
-                    <ArrowRightIcon className="inline ml-3 h-5 w-5" />
+                    <ArrowRightIcon className="inline w-5 h-5 ml-3" />
                   )}
                 </span>
               </Link>
@@ -139,7 +151,7 @@ const Navbar = (props: any) => {
                       }}
                       onKeyPress={(e) => {
                         if (e.key === 'Enter') {
-                          handleQuoteSearch(e);
+                          handleQuoteSearch();
                         }
                       }}
                       id="sidenav-user-search"
@@ -161,94 +173,79 @@ const Navbar = (props: any) => {
               </div>
             </div>
           </li>
-          {/* ) : (
-            ''
-          )} */}
 
           <li>
             <div className="row align-items-center d-flex w-100">
-              <div className="col-auto">
-                <Link
-                  href="/quotes/list"
-                  onClick={() => {
-                    dispatch(
-                      fetchQuotes(
-                        auth.loggedInUser.FSID,
-                        auth.loggedInUser.Username,
-                        90,
-                      ),
-                    );
-                  }}
-                  passHref
-                >
-                  <span className="block px-4 py-2 mt-2 text-sm font-semibold text-gray-900 bg-gray-200 rounded-lg dark-mode:bg-gray-700 dark-mode:hover:bg-gray-600 dark-mode:focus:bg-gray-600 dark-mode:focus:text-white dark-mode:hover:text-white dark-mode:text-gray-200 hover:text-gray-900 focus:text-gray-900 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:shadow-outline">
-                    <FolderOpenIcon className="inline mr-3 h-5 w-5" />
-                    My Quotes
-                  </span>
+              <div className="col">
+                <Link href="/quotes/info" passHref>
+                  <a
+                    onClick={async (e: any) => {
+                      dispatch(emptyLines());
+                      dispatch(setEditing(null));
+                    }}
+                    className="nav-link text-nowrap"
+                  >
+                    <span className="nav-item">
+                      <DocumentAddIcon className="inline w-5 h-5 mr-3" />
+                      New Quote
+                    </span>
+                  </a>
                 </Link>
               </div>
             </div>
           </li>
-          <li>
-            <div className="row align-items-center d-flex w-100">
-              <div className="col">
-                {/* <Link
-                  to="/quotes/info"
-                  onClick={async (e: any) => {
-                    dispatch(emptyLines());
-                    dispatch(setEditing(null));
-                  }}
-                  className="nav-link text-nowrap"
-                >
-                  <i className="fs-5 bi-file-earmark-plus" />
-                  <span className="ms-1 d-none d-lg-inline">New Quote</span>
-                </Link> */}
-              </div>
-            </div>
-          </li>
-          {/* {auth.state.isAdmin ? (
+          {auth?.user?.is_staff ? (
             <div>
               <li>
                 <div className="row align-items-center d-flex w-100">
                   <div className="col-auto">
-                    <Link to="/quotes/admin" className="nav-link text-truncate">
-                      <i className="fs-5 bi-gear-wide-connected" />
-                      <span className="ms-1 d-none d-lg-inline">Admin</span>
+                    <Link
+                      href={`${process.env.NEXT_PUBLIC_SERVER_HOST}/admin`}
+                      passHref
+                    >
+                      <span className="nav-item">
+                        <CogIcon className="inline w-5 h-5 mr-3" />
+                        Admin
+                      </span>
                     </Link>
                   </div>
 
                   <div className="col-1">
-                    <AdminSwitch
+                    {/* <AdminSwitch
                       {...props}
                       onChange={handleAdminChange}
                       adminEnabled={auth.state.adminEnabled}
-                    />
+                    /> */}
                   </div>
                 </div>
               </li>
 
               <li>
                 <div className="col-auto">
-                  <Link to="/auth/account" className="nav-link text-truncate">
-                    <i className="fs-5 bi-people" />
-                    <span className="ms-1 d-none d-lg-inline ">My Account</span>
+                  <Link href="/auth/account" passHref>
+                    <span className="nav-item">
+                      <UserIcon className="inline w-5 h-5 mr-3" />
+                      My Account
+                    </span>
                   </Link>
                 </div>
               </li>
             </div>
-          ) : null} */}
+          ) : null}
 
-          <li>
-            <div className="row flex-end">
+          <li className="pb-3 mt-auto">
+            <div className="row ">
               <div className="col-auto">
                 <a
                   onClick={() => {
-                    dispatch(emptyQuoteList);
-                    auth.logout();
+                    dispatch(() => emptyQuoteList);
+                    signOut({
+                      callbackUrl: '/auth/login',
+                    });
                   }}
                 >
-                  <span className="self-end block px-4 py-2 mt-2 text-sm font-semibold text-gray-900 bg-gray-200 rounded-lg dark-mode:bg-gray-700 dark-mode:hover:bg-gray-600 dark-mode:focus:bg-gray-600 dark-mode:focus:text-white dark-mode:hover:text-white dark-mode:text-gray-200 hover:text-gray-900 focus:text-gray-900 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:shadow-outline">
-                    <LogoutIcon className="invisible md:visible inline mr-3 h-5 w-5 " />
+                  <span className="block px-4 py-2 mt-2 text-sm m nav-item">
+                    <LogoutIcon className="inline w-5 h-5 mr-3 md:visible" />
                     Logout
                   </span>
                 </a>
@@ -257,7 +254,7 @@ const Navbar = (props: any) => {
           </li>
         </ul>
       </div>
-    </>
+    </nav>
   );
 };
 export default Navbar;

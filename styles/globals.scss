@@ -4,6 +4,23 @@ body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  overflow: hidden;
+}
+
+.nav-visible {
+  visibility: visible;
+}
+
+.nav-hidden {
+  visibility: hidden;
+  @apply md:visible;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  overflow: auto;
+  @apply bg-white flex-col md:flex-row h-screen relative;
 }
 
 a {
@@ -15,6 +32,33 @@ a {
   box-sizing: border-box;
 }
 
+.image-container {
+  max-width: 100%;
+  min-height: 100%;
+  > div {
+    position: unset !important;
+  }
+
+  > p {
+    position: absolute !important;
+    background: #0fc;
+    z-index: 100;
+    margin-top: -1.6 rem;
+  }
+
+  .image {
+    object-fit: fill;
+    width: 100% !important;
+    position: relative !important;
+    height: 100% !important;
+  }
+}
+
+@import '../src/components/containers/Tables/Core/table-styles';
+@import '../src/components/containers/Navbar/styles';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@import './datepicker-styles/react-datepicker';

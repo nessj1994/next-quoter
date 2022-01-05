@@ -1,5 +1,7 @@
-import { useLocation } from 'react-router-dom';
+import { useRouter } from 'next/router';
 
-export default function useQuery(): URLSearchParams {
-  return new URLSearchParams(useLocation().search);
+export default function useQuery() {
+  const router = useRouter();
+  console.log(router.query);
+  return router.query;
 }

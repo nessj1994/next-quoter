@@ -1,9 +1,13 @@
 import { createSlice, createEntityAdapter } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { AxiosResponse } from 'axios';
 import { QuoteLine, QuoteLineState } from './types';
 // eslint-disable-next-line import/no-cycle
 import { RootState } from '../../store';
+import { LineComponent } from 'store';
 
+import initAPIConnection from 'services/api/apiConnector';
+
+const api = initAPIConnection({});
 enum ConfigLineFileTypes {
   XML = '.xml',
   CSI = '.CSI.html',
@@ -11,16 +15,16 @@ enum ConfigLineFileTypes {
 }
 // ENTITY ADAPTER - Gives us various ways to handle state entities
 const linesAdapter = createEntityAdapter<QuoteLine>({
-  selectId: (line) => line?.LineID,
+  selectId: (line) => line?.line_id,
   sortComparer: (a, b) => {
     // multisort test
-    return a.ACGymID > b.ACGymID
+    return a.ac_gym_id > b.ac_gym_id
       ? 1
-      : a.ACGymID < b.ACGymID
+      : a.ac_gym_id < b.ac_gym_id
       ? -1
-      : a.LineID > b.LineID
+      : a.line_id > b.line_id
       ? 1
-      : a.LineID < b.LineID
+      : a.line_id < b.line_id
       ? -1
       : 0;
   },
@@ -69,15 +73,16 @@ const linesSlice = createSlice({
 export const fetchLines = (quoteID: number) => async (dispatch: any) => {
   dispatch(setLoading(true));
   dispatch(removeAll());
-  const response = await axios.get(
-    `${process.env.SERVER_HOST}/inferno/v1/quotes/lines/${quoteID}`,
-    { withCredentials: true },
-  );
+  const { data }: AxiosResponse<{ results: Array<QuoteLine> }, any> =
+    await api.get(
+      `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/?quote_id=${quoteID}`,
+      { withCredentials: true },
+    );
 
-  console.log(response);
-  await dispatch(loadLines(response.data));
+  console.log(data.results);
+  await dispatch(loadLines(data.results));
   dispatch(setLoading(false));
-  return response;
+  return data.results;
 };
 
 export const retrieveFile =
@@ -93,8 +98,8 @@ export const retrieveFile =
   async (dispatch: any) => {
     dispatch(setLoading(true));
 
-    const content = await axios.get(
-      `${process.env.SERVER_HOST}/inferno/v1/quotes/lines/get_conf_item_files/`,
+    const content = await api.get(
+      `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/get_conf_item_files/`,
       {
         params: {
           Quote: quoteNum,
@@ -115,8 +120,8 @@ export const retrieveFile =
 
 export const processGyms =
   (quoteNum: string, gymNum: number) => async (dispatch: any) => {
-    const response = await axios.get(
-      `${process.env.SERVER_HOST}/inferno/v1/quotes/lines/process_gym/${quoteNum}/${gymNum}`,
+    const response = await api.get(
+      `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/process_gym/${quoteNum}/${gymNum}`,
     );
     console.log(response.data);
 
@@ -127,8 +132,8 @@ export const processGyms =
   };
 
 export const retrieveLineConf = (lineID: number) => async (dispatch: any) => {
-  const response = await axios.get(
-    `${process.env.SERVER_HOST}/inferno/v1/quotes/lines/get_config/${lineID}`,
+  const response = await api.get(
+    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/get_config/${lineID}`,
   );
 
   console.log(response.data);
@@ -139,8 +144,8 @@ export const retrieveLineConf = (lineID: number) => async (dispatch: any) => {
 };
 
 export const retrieveLineCSI = (lineID: number) => async (dispatch: any) => {
-  const response = await axios.get(
-    `${process.env.SERVER_HOST}/inferno/v1/quotes/lines/get_csi/${lineID}`,
+  const response = await api.get(
+    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/get_csi/${lineID}`,
   );
   let newTab = window.open('/test', '_blank');
 
@@ -151,8 +156,8 @@ export const retrieveLineCSI = (lineID: number) => async (dispatch: any) => {
 };
 
 export const retrieveLineSpec = (lineID: number) => async (dispatch: any) => {
-  const response = await axios.get(
-    `${process.env.SERVER_HOST}/inferno/v1/quotes/lines/get_spec/${lineID}`,
+  const response = await api.get(
+    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/get_spec/${lineID}`,
   );
   let newTab = window.open('/test', '_blank');
 
@@ -163,8 +168,8 @@ export const retrieveLineSpec = (lineID: number) => async (dispatch: any) => {
 };
 
 export const updateLine = (updated: QuoteLine) => async (dispatch: any) => {
-  const response = await axios.post(
-    `${process.env.SERVER_HOST}/inferno/v1/quotes/lines/update_line`,
+  const response = await api.post(
+    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/update_line`,
     updated,
     { withCredentials: true },
   );
@@ -184,8 +189,8 @@ export const addNewLine =
       },
     ];
 
-    const response = await axios.post(
-      `${process.env.SERVER_HOST}/inferno/v1/quotes/lines/add_line`,
+    const response = await api.post(
+      `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/`,
       requestBody,
       { withCredentials: true },
     );
@@ -199,8 +204,8 @@ export const addNewLine =
 
 export const removeLine = (lineID: number) => async (dispatch: any) => {
   // const response = await axios.post()
-  const response = await axios.get(
-    `${process.env.SERVER_HOST}/inferno/v1/quotes/lines/delete_line/${lineID}`,
+  const response = await api.get(
+    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/delete_line/${lineID}`,
     {
       validateStatus(status: number) {
         let valid = status < 400;
@@ -230,7 +235,7 @@ export const addComponent =
       Quantity: data.qty,
       Type: data.type,
     };
-    const response = await axios.post(
+    const response = await api.post(
       `${process.env.SERVER_HOST}/inferno/v1/quotes/lines/add_component`,
       requestBody,
       { withCredentials: true },
@@ -242,7 +247,7 @@ export const addComponent =
 
 export const selectComponents = (
   state: RootState,
-): Record<string, any> | null => state.lines.compList;
+): Array<LineComponent> | null => state.lines.compList;
 
 // Retrieve linesSlice components separately
 const linesSliceActions = linesSlice.actions;

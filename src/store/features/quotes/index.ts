@@ -16,6 +16,8 @@ import {
   selectQuoteByQuoteNum,
   updateQuote,
   updateHeader,
+  markQuoteDeleted,
+  getQuotesState,
 } from './headersSlice';
 // eslint-disable-next-line import/no-cycle
 import {
@@ -63,4 +65,6 @@ export {
   retrieveLineSpec,
   processGyms,
   addComponent,
+  markQuoteDeleted,
+  getQuotesState,
 };
