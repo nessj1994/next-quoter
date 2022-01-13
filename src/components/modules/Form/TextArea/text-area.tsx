@@ -18,10 +18,10 @@ const TextArea: React.FC<FieldAttributes<{}>> = ({
       <textarea
         {...field}
         {...props}
+        cols={50}
         rows={3}
-        className={`form-control form-control-sm bg-gray-100 shadow-md ${
-          meta.error ? 'invalid' : 'valid'
-        }`}
+        maxLength={500}
+        className={`custom-input ${meta.error ? 'invalid' : 'valid'}`}
       />
 
       <div className="feedback invalid">

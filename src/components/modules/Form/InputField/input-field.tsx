@@ -18,7 +18,7 @@ const InputField: React.FC<FieldAttributes<{}>> = ({
       <div>
         <input
           type={props.type}
-          className={`form-control form-control-sm bg-gray-100 bg-opacity-90 shadow-md ${
+          className={`custom-input ${
             meta.error && meta.touched
               ? 'invalid'
               : meta.touched &&

@@ -6,6 +6,8 @@ import {
   quoteHeaderSelectors,
   fetchQuotes,
   fetchLines,
+  updateHeader,
+  getAdminEnabled,
 } from 'store';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks/hooks';
 import QuoteInfoLines from '../../../components/containers/QuoteLines/index';
@@ -20,7 +22,7 @@ import { dispatch } from 'react-hot-toast/dist/core/store';
 const QuoteInfoPage: NextPage = (pageProps) => {
   // Grab the dispatch function from our redux store
   const dispatch = useAppDispatch();
-
+  const adminOn = useAppSelector(getAdminEnabled);
   // Call useSession() to retrieve the session passed through our props
   // Look below in getServerSideProps to see the where it is passed in
   // In this case we require the session, and if it's not valid we send the user
@@ -109,6 +111,7 @@ const QuoteInfoPage: NextPage = (pageProps) => {
 
   const updateQuoteMultiplier = (value: number) => {
     setQuoteMultiplier(value);
+    dispatch(updateHeader({ ...currQuote, quote_multiplier: value }));
   };
 
   return (
@@ -119,7 +122,7 @@ const QuoteInfoPage: NextPage = (pageProps) => {
         {...pageProps}
         quote={currQuote}
         quoteMultiplier={quoteMultiplier}
-        adminSetting={session.data?.user?.is_staff}
+        adminSetting={adminOn}
         updateQuoteMultiplier={updateQuoteMultiplier}
       />
     </div>

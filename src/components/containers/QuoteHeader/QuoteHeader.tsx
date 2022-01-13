@@ -16,6 +16,7 @@ import {
 } from '../../../store';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks/hooks';
 import { useSession } from 'next-auth/react';
+import router, { useRouter } from 'next/router';
 // import './quote-header.scss';
 interface HeaderFormValues {
   quote_date: Date;
@@ -94,6 +95,7 @@ const QuoteInfoHeader = React.memo((props: any) => {
   const quotesState = useAppSelector((state) => getQuotesState(state));
   const SelectedQuote = useAppSelector((state) => editing(state));
   const auth = useSession();
+  const router = useRouter();
 
   const initExpireDate = (data: any) => {
     let quoteDate;
@@ -156,6 +158,18 @@ const QuoteInfoHeader = React.memo((props: any) => {
       mounted = false;
     };
   }, [dispatch, SelectedQuote, quotesState.loading]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (mounted && SelectedQuote?.quote_number) {
+      router.push(`/quotes/info/${SelectedQuote?.quote_id}`);
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [SelectedQuote?.quote_number]);
 
   const handleSave = async (data: RequireAtLeastOne<QuoteHeader>) => {
     // dispatch here
@@ -228,9 +242,9 @@ const QuoteInfoHeader = React.memo((props: any) => {
                 </button>
               </div>
             </div>
-            <div className="flex flex-col flex-wrap flex-auto h-full gap-3 px-4 sm:flex-row">
+            <div className="grid grid-cols-1 md:grid-cols-3 auto-cols-auto gap-10">
               {/* card one  */}
-              <div className="flex flex-col items-start flex-1 w-1/3 gap-3">
+              <div className="px-3 border border-indigo-400">
                 <h1 className="text-xl font-semibold">Quote Info</h1>
                 {auth.data?.user?.is_staff && (
                   <div className="">
@@ -266,7 +280,7 @@ const QuoteInfoHeader = React.memo((props: any) => {
                 </div>
               </div>
               {/* card two  */}
-              <div className="flex flex-col items-start flex-1 w-1/3 gap-3 ">
+              <div className="px-3 border border-indigo-400">
                 <h1 className="text-xl font-semibold">Shipping Info</h1>
                 <div className="">
                   <label htmlFor="shippingCust">Customer</label>
@@ -286,6 +300,7 @@ const QuoteInfoHeader = React.memo((props: any) => {
                   <InputField
                     name="ship_email"
                     type="email"
+                    size={20}
                     placeholder="example@litaniasports.com"
                   />
                 </div>
@@ -299,39 +314,38 @@ const QuoteInfoHeader = React.memo((props: any) => {
                 </div>
                 <div className="">
                   <label htmlFor="ship_city">City</label>
-                  <InputField
-                    as="input"
-                    size={3}
-                    name="ship_city"
-                    type="text"
-                  />
+                  <InputField as="input" name="ship_city" type="text" />
                 </div>
-                <div className="col-8 col-md-4 col-lg-3">
-                  <label htmlFor="ship_state">State</label>
-                  <InputField
-                    as="input"
-                    maxLength={2}
-                    size={3}
-                    name="ship_state"
-                    type="text"
-                  />
+                <div className="flex flex-1 gap-2 row">
+                  <div className="col-8 col-md-4 col-lg-3">
+                    <label htmlFor="ship_state">State</label>
+                    <InputField
+                      as="input"
+                      maxLength={2}
+                      size={3}
+                      name="ship_state"
+                      type="text"
+                    />
+                  </div>
+                  <div className="col-8 col-md-4 col-lg-3">
+                    <label htmlFor="ship_zip">ZIP</label>
+                    <InputField
+                      as="input"
+                      size={10}
+                      maxLength={5}
+                      name="ship_zip"
+                      type="text"
+                    />
+                  </div>
                 </div>
-                <div className="row">
-                  <label htmlFor="ship_zip">ZIP</label>
-                  <InputField
-                    as="input"
-                    maxLength={5}
-                    name="ship_zip"
-                    type="text"
-                  />
-                </div>
+
                 <div>
                   <label htmlFor="ship_date">Ship Date</label>
                   <DateField name="ship_date" required />
                 </div>
               </div>
               {/* card  three */}
-              <div className="flex flex-col items-start flex-1 w-1/3 ">
+              <div className="px-3 border border-indigo-400">
                 <h1 className="text-xl font-semibold">Status</h1>
 
                 <div className="flex-1">

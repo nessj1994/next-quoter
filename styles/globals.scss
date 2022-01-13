@@ -54,6 +54,10 @@ a {
   }
 }
 
+.custom-input {
+  @apply block w-full text-base md:text-sm bg-white border border-gray-300 rounded shadow-sm form-input;
+}
+
 @import '../src/components/containers/Tables/Core/table-styles';
 @import '../src/components/containers/Navbar/styles';
 

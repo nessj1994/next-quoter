@@ -9,6 +9,7 @@ import useAuth from '../../../services/authLib/hooks/useAuth';
 import {
   editing,
   createNewQuote,
+  toggleAdminMode,
   setEditing,
   emptyLines,
   fetchQuotes,
@@ -28,11 +29,16 @@ import {
 } from '@heroicons/react/outline';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks/hooks';
 import { useEffect } from 'react';
-import { emptyQuoteList } from 'store/features/quotes/headersSlice';
+import {
+  emptyQuoteList,
+  getAdminEnabled,
+} from 'store/features/quotes/headersSlice';
 import { signOut, useSession } from 'next-auth/react';
+import AdminSwitch from 'components/elements/AdminSwitch';
 
 const Navbar = (props: any) => {
   const current = useAppSelector(editing);
+  const adminOn = useAppSelector(getAdminEnabled);
   const dispatch = useAppDispatch();
   const { data: auth, status } = useSession();
   // const quoteHeaders = useQuoteHeaders();
@@ -100,8 +106,8 @@ const Navbar = (props: any) => {
                     }}
                   >
                     <span className="nav-item">
-                      <FolderOpenIcon className="inline w-5 h-5 mr-3" />
-                      My Quotes
+                      <HomeIcon className="inline w-5 h-5 mr-3" />
+                      Home
                     </span>
                   </a>
                 </Link>
@@ -161,10 +167,10 @@ const Navbar = (props: any) => {
                     <button
                       type="submit"
                       className="btn btn-primary"
-                      // onClick={(e) => {
-                      //   e.stopPropagation();
-                      //   handleQuoteSearch(e);
-                      // }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuoteSearch();
+                      }}
                     >
                       Search
                     </button>
@@ -195,42 +201,26 @@ const Navbar = (props: any) => {
             </div>
           </li>
           {auth?.user?.is_staff ? (
-            <div>
-              <li>
-                <div className="row align-items-center d-flex w-100">
-                  <div className="col-auto">
-                    <Link
-                      href={`${process.env.NEXT_PUBLIC_SERVER_HOST}/admin`}
-                      passHref
-                    >
-                      <span className="nav-item">
-                        <CogIcon className="inline w-5 h-5 mr-3" />
-                        Admin
-                      </span>
-                    </Link>
+            <li>
+              <span className="nav-item flex flex-row  justify-between">
+                <Link
+                  href={`${process.env.NEXT_PUBLIC_SERVER_HOST}/admin`}
+                  passHref
+                >
+                  <div className="inline-flex">
+                    <CogIcon className="inline w-5 h-5 mr-3" />
+                    <p>Admin</p>
                   </div>
-
-                  <div className="col-1">
-                    {/* <AdminSwitch
-                      {...props}
-                      onChange={handleAdminChange}
-                      adminEnabled={auth.state.adminEnabled}
-                    /> */}
-                  </div>
-                </div>
-              </li>
-
-              <li>
-                <div className="col-auto">
-                  <Link href="/auth/account" passHref>
-                    <span className="nav-item">
-                      <UserIcon className="inline w-5 h-5 mr-3" />
-                      My Account
-                    </span>
-                  </Link>
-                </div>
-              </li>
-            </div>
+                </Link>
+                <AdminSwitch
+                  {...props}
+                  onChange={() => {
+                    dispatch(toggleAdminMode());
+                  }}
+                  adminEnabled={adminOn}
+                />
+              </span>
+            </li>
           ) : null}
 
           <li className="pb-3 mt-auto">

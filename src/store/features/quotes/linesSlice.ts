@@ -120,8 +120,8 @@ export const retrieveFile =
 
 export const processGyms =
   (quoteNum: string, gymNum: number) => async (dispatch: any) => {
-    const response = await api.get(
-      `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/process_gym/${quoteNum}/${gymNum}`,
+    const response = await api.post(
+      `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/${quoteNum}/process_gym/${gymNum}/`,
     );
     console.log(response.data);
 
@@ -168,8 +168,8 @@ export const retrieveLineSpec = (lineID: number) => async (dispatch: any) => {
 };
 
 export const updateLine = (updated: QuoteLine) => async (dispatch: any) => {
-  const response = await api.post(
-    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/update_line`,
+  const response = await api.patch(
+    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/${updated.line_id}/`,
     updated,
     { withCredentials: true },
   );
@@ -179,26 +179,26 @@ export const updateLine = (updated: QuoteLine) => async (dispatch: any) => {
 };
 
 export const addNewLine =
-  (data: { quoteID: number; partNum: string; nextLine: number }) =>
+  (line: { quoteID: number; partNum: string; nextLine: number }) =>
   async (dispatch: any) => {
-    const requestBody = [
-      {
-        QuoteID: data.quoteID,
-        PartNum: data.partNum,
-        LineNumber: data.nextLine,
-      },
-    ];
+    const requestBody = {
+      quote_id: line.quoteID,
+      part_num: line.partNum,
+      line_number: line.nextLine,
+      enabled: true,
+    };
 
-    const response = await api.post(
-      `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/`,
-      requestBody,
+    const { data: lineData }: AxiosResponse<QuoteLine[], any> = await api.post(
+      `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/${line.quoteID}/add_line/`,
+      { ...requestBody },
       { withCredentials: true },
     );
 
-    console.log(response.data);
-    if (response.data) {
-      dispatch(removeAll());
-      dispatch(addLines(response.data));
+    let arr = [lineData];
+
+    console.log(...arr);
+    if (lineData) {
+      dispatch(addLines(lineData));
     }
   };
 

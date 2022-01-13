@@ -119,6 +119,7 @@ export type QuoteHeader = {
   quoted?: string;
   market?: string;
   migrated: boolean;
+  quote_total_val?: number;
 };
 
 export type LineComponent = {
@@ -138,6 +139,7 @@ export type LineComponent = {
 export type QuoteHeaderState = {
   loading: boolean;
   ageSelection: number;
+  adminEnabled: boolean;
   currentQuote: QuoteHeader | Partial<QuoteHeader>;
 };
 export type QuoteLine = {

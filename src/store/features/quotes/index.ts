@@ -18,6 +18,8 @@ import {
   updateHeader,
   markQuoteDeleted,
   getQuotesState,
+  toggleAdminMode,
+  getAdminEnabled,
 } from './headersSlice';
 // eslint-disable-next-line import/no-cycle
 import {
@@ -48,7 +50,9 @@ export { quoteHeaderSelectors, editing, quoteLinesSelectors, selectComponents };
 
 // Export actions
 export {
+  toggleAdminMode,
   setEditing,
+  getAdminEnabled,
   fetchQuotes,
   createNewQuote,
   updateHeader,

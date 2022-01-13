@@ -44,6 +44,7 @@ const selectionHook = (hooks: Hooks<any>) => {
       disableResizing: true,
       disableGroupBy: true,
       align: 'center',
+      maxWidth: 45,
       hideFooter: false,
       printable: false,
       // The header can use the table's getToggleAllRowsSelectedProps method
@@ -171,11 +172,11 @@ const QuoteInfoLines = (props: any) => {
 
     if (gymIndex.selectedIndex.valueOf() === 0) {
       window.location.href = `https://driveworks.litaniasports.com/Integration?User=jness&Run=Gym&PorterJobNo=${
-        props.quote?.QuoteNumber
-      }&GymNo=${props.quote?.Gyms + 1}`;
+        props.quote?.quote_number
+      }&GymNo=${props.quote?.gyms + 1}`;
     } else {
       window.location.href = `https://driveworks.litaniasports.com/Integration?User=jness&Run=Gym&Transition=edit&Specification=${
-        props.quote?.QuoteNumber
+        props.quote?.quote_number
       }-Gym${gymIndex.selectedIndex.valueOf()}`;
     }
   };
@@ -191,32 +192,11 @@ const QuoteInfoLines = (props: any) => {
           hideFooter: true,
           columns: [
             {
-              Header: 'Gym #',
-              accessor: (row: QuoteLine) => {
-                return row.ac_gym_id > 0 ? row.ac_gym_id : '-';
-              },
-              printable: false,
-              hideFooter: false,
-              disableGroupBy: false,
-              disableFilters: true,
-              Aggregated: ({ value }: any) => `${value} (avg)`,
-            },
-            {
-              Header: 'LineID',
-              accessor: 'line_id',
-              hideFooter: true,
-              printable: false,
-              align: 'left',
-              hideHeader: true,
-              defaultCanSort: true,
-              isSorted: true,
-            },
-            {
               Header: 'Line',
               accessor: 'line_number',
               width: 64,
               minWidth: 64,
-              maxWidth: 128,
+              maxWidth: 64,
               hideFooter: false,
               align: 'left',
               printable: true,
@@ -231,6 +211,8 @@ const QuoteInfoLines = (props: any) => {
               Header: 'Part',
               accessor: 'part_num',
               Cell: PartCell,
+              minWidth: 190,
+              maxWidth: 256,
               filter: 'fuzzyText',
               printable: true,
               disableFilters: true,
@@ -255,7 +237,7 @@ const QuoteInfoLines = (props: any) => {
                 }, 0);
                 return <span>{total.toFixed(2)} LBS</span>;
               },
-              maxWidth: 128,
+              maxWidth: 90,
               disableGroupBy: true,
               disableFilters: true,
               printable: true,
@@ -267,10 +249,10 @@ const QuoteInfoLines = (props: any) => {
               accessor: 'quantity',
               Cell: EditableCell,
               hideFooter: false,
-              width: 64,
-              minWidth: 64,
+              width: 48,
+              minWidth: 48,
+              maxWidth: 48,
               printable: true,
-              maxWidth: 64,
               align: 'left',
               disableFilters: true,
               disableGroupBy: true,
@@ -283,7 +265,11 @@ const QuoteInfoLines = (props: any) => {
                 return cost;
               },
               Cell: (props: CellProps<QuoteLine>): JSX.Element => {
-                return <span>$ {props.row.original?.item_cost}</span>;
+                return (
+                  <span>
+                    $ {Number(props.row.original?.item_cost).toFixed(2)}
+                  </span>
+                );
               },
               Footer: (info: any) => {
                 const total = info.rows.reduce((sum: number, row: any) => {
@@ -293,11 +279,12 @@ const QuoteInfoLines = (props: any) => {
                     row.original.item_cost * Number(row.original.enabled) + sum
                   );
                 }, 0);
-                return <span>Total: ${total.toFixed(2)}</span>;
+                return <span>${total.toFixed(2)}</span>;
               },
               hideHeader: !adminSetting,
               hideFooter: !adminSetting,
               maxWidth: 112,
+              width: 112,
               printable: false,
               align: 'left',
               disableGroupBy: true,
@@ -312,6 +299,8 @@ const QuoteInfoLines = (props: any) => {
               Cell: PricingCell,
               hideHeader: !adminSetting,
               hideFooter: !adminSetting,
+              maxWidth: 90,
+              width: 90,
               disableGroupBy: true,
               disableFilters: true,
               printable: false,
@@ -326,12 +315,27 @@ const QuoteInfoLines = (props: any) => {
               maxWidth: 128,
               printable: false,
               Footer: (info: any) => {
-                const total = info.rows.reduce((sum: number, row: any) => {
+                const totalPrice = info.rows.reduce((sum: number, row: any) => {
                   // console.log(row);
-                  return parseFloat(row.values['Line Total']) + sum;
+                  return (
+                    parseFloat(row.values['Line Total']) *
+                      header.quote_multiplier +
+                    sum
+                  );
                 }, 0);
-                // return <span>Total: ${total.toFixed(2)}</span>;
-                return <> </>;
+
+                const totalCost = info.rows.reduce((sum: number, row: any) => {
+                  // console.log(row);
+                  return (
+                    parseFloat(row.values['Unit Cost']) *
+                      row.original.quantity +
+                    sum
+                  );
+                }, 0);
+                const totalProfit = totalPrice - totalCost;
+
+                const totalMargin = totalProfit / totalPrice;
+                return <span>{totalMargin.toFixed(2)}</span>;
               },
               hideHeader: !adminSetting,
               hideFooter: !adminSetting,
@@ -345,23 +349,23 @@ const QuoteInfoLines = (props: any) => {
                 if (row.configured) {
                   return Number(
                     row.unit_price! *
-                      // props.quoteMultiplier *
+                      props.quoteMultiplier *
                       Number(row.enabled),
                   ).toFixed(2);
                 }
                 return Number(
                   row.unit_price! *
                     row.line_multiplier *
-                    // props.quoteMultiplier *
+                    props.quoteMultiplier *
                     Number(row.enabled),
                 ).toFixed(2);
               },
               Cell: (props: CellProps<QuoteLine>): JSX.Element => {
                 return <span>$ {props.row.values['Price']}</span>;
               },
-              width: 128,
-              minWidth: 128,
-              maxWidth: 128,
+              width: 90,
+              minWidth: 90,
+              maxWidth: 90,
               hideFooter: false,
               align: 'left',
               printable: true,
@@ -381,7 +385,7 @@ const QuoteInfoLines = (props: any) => {
                     row.unit_price *
                       row.quantity *
                       row.line_multiplier *
-                      // props.quoteMultiplier *
+                      props.quoteMultiplier *
                       Number(row.enabled),
                   ).toFixed(2);
                 }
@@ -422,7 +426,7 @@ const QuoteInfoLines = (props: any) => {
       // ! PATCH ME: Add case for QuoteID is null
       dispatch(
         addNewLine({
-          quoteID: props.quote.QuoteID,
+          quoteID: props.quote.quote_id,
           partNum: lineitem.value.toString(),
           nextLine: lines.length + 1,
         }),

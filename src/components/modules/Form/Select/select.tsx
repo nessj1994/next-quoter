@@ -15,7 +15,7 @@ const SelectField: React.FC<FieldAttributes<{}>> = ({
   return (
     <div>
       <select
-        className={`form-control form-control-sm bg-gray-100 rounded-sm ${
+        className={`custom-input bg-gray-100 rounded-sm ${
           meta.error ? 'invalid' : 'valid'
         }`}
         {...field}

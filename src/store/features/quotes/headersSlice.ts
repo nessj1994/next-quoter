@@ -10,8 +10,10 @@ import { QuoteHeaderState, QuoteHeader } from './types';
 // eslint-disable-next-line import/no-cycle
 import { RootState } from '../../store';
 import moment from 'moment';
-
-const api = initAPIConnection({});
+let api;
+if (typeof window !== undefined) {
+  api = initAPIConnection({});
+}
 
 const quotesAdapter = createEntityAdapter<QuoteHeader>({
   selectId: (quote) => quote.quote_id ?? 0,
@@ -55,6 +57,9 @@ const quoteSlice = createSlice({
     },
     deleteQuote: quotesAdapter.removeOne,
     emptyQuoteList: quotesAdapter.removeAll,
+    toggleAdmin: (state) => {
+      state.adminEnabled = !state.adminEnabled;
+    },
   },
 });
 
@@ -71,11 +76,8 @@ export const fetchQuotes =
     await dispatch(emptyQuoteList());
     const response: AxiosResponse<{ results: Array<QuoteHeader> }, any> =
       await api.get(
-        `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/?cust_id=${customer_id}&quote_date__gte=${convertedAge}&csr=${csr}`,
+        `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/?cust_id=${customer_id}&quote_date__gte=${convertedAge}`,
         {
-          // headers: {
-          //   Authorization: 'Token 1f9d60567da79305ab2f17aea29fdaa9e2dca798',
-          // },
           withCredentials: true,
         },
       );
@@ -89,9 +91,8 @@ export const markQuoteDeleted =
   (quote: QuoteHeader, custID: number) => async (dispatch: any) => {
     console.log(`hello, ${custID}`);
 
-    const response = await api.post(
-      `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/toggle_deleted`,
-      { setDeleted: true, quoteNum: quote.quote_number, custID: custID },
+    const response = await api.patch(
+      `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/${quote.quote_id}/toggle_deleted/`,
     );
     dispatch(deleteQuote(quote.quote_id));
 
@@ -132,6 +133,10 @@ export const updateHeader =
     return response;
   };
 
+export const toggleAdminMode = () => async (dispatch: any) => {
+  dispatch(toggleAdmin());
+};
+
 export const createNewQuote =
   (QuoteNum: string, CustomerCustID: number, Username: string) =>
   async (dispatch: any) => {
@@ -164,6 +169,10 @@ export const getQuotesState = (state: RootState): QuoteHeaderState => {
   return state.quotes;
 };
 
+export const getAdminEnabled = (state: RootState): Boolean => {
+  return state.quotes.adminEnabled;
+};
+
 export const editing = (state: RootState): QuoteHeader | Partial<QuoteHeader> =>
   state.quotes.currentQuote;
 
@@ -187,6 +196,7 @@ export const {
   setLoading,
   deleteQuote,
   emptyQuoteList,
+  toggleAdmin,
 } = quoteSliceActions;
 
 export default quoteSlice;

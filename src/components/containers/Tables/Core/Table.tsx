@@ -28,7 +28,7 @@ import {
   FilterProps,
 } from 'react-table';
 import { camelToWords, useDebounce } from 'utils';
-import { fuzzyTextFilter, numericTextFilter } from '../Filters';
+import { FuzzyText, NumericText } from '../Filters';
 import ResizeHandle from '../ResizeHandle';
 import {
   ArrowDownIcon,
@@ -105,8 +105,8 @@ const cellProps = <T extends Record<string, unknown>>(
 
 // Object containing our filterTypes
 const filterTypes = {
-  fuzzyText: fuzzyTextFilter,
-  numeric: numericTextFilter,
+  fuzzyText: FuzzyText,
+  numeric: NumericText,
 };
 
 // A Type to add our custom fields onto the headers
@@ -208,7 +208,7 @@ function Table<T extends Record<string, unknown>>(
           {row.cells.map((cell) => {
             return cell.column.hideHeader ? null : (
               <td
-                className={`flex px-3 py-2 font-sans col whitespace-nowrap ${
+                className={`flex py-3 font-sans col whitespace-nowrap ${
                   cell.column.printable ? '' : 'print:invisible'
                 }`}
                 {...cell.getCellProps(cellProps)}
@@ -277,41 +277,32 @@ function Table<T extends Record<string, unknown>>(
                     hideHeader || (
                       <th
                         id="table-header"
-                        className={`flex-col justify-between table-cell ml-auto uppercase hover:shadow-sm ${
+                        className={`table-cell uppercase border border-porter-light hover:shadow-sm  ${
                           !printable ? 'printer-friendly' : ''
                         }`}
+                        {...column.getHeaderProps(
+                          column.getSortByToggleProps(),
+                        )}
                         {...column.getHeaderProps(headerProps)}
                       >
-                        <div
-                          className={`flex flex-row justify-between`}
-                          {...column.getHeaderProps(
-                            column.getSortByToggleProps(),
-                          )}
-                        >
-                          <div
-                            className={`ml-3 font-medium ${
-                              !column.printable ? 'print:hidden' : ''
-                            }`}
-                          >
-                            {column.render('Header')}
-                          </div>
+                        {/* contain our header and sort icon */}
+                        <div className="flex flex-1 justify-between overflow-hidden">
+                          {column.render('Header')}
                           {column.canSort && (
-                            <span className="inline">
+                            <div className="inline-flex justify-end">
                               {column.isSorted ? (
                                 column.isSortedDesc ? (
-                                  <ArrowDownIcon className="inline w-5 h-5 ml-3" />
+                                  <ArrowDownIcon className="inline w-5 h-5 " />
                                 ) : (
-                                  <ArrowUpIcon className="inline w-5 h-5 ml-3" />
+                                  <ArrowUpIcon className="inline w-5 h-5" />
                                 )
                               ) : (
                                 ''
                               )}
-                            </span>
+                            </div>
                           )}
                         </div>
-                        <div className="flex flex-col w-full ml-3 flex-nowrap">
-                          {column.canFilter ? column.render('Filter') : null}
-                        </div>
+                        {/* {column.canFilter ? column.render('Filter') : null} */}
                       </th>
                     )
                   );
@@ -334,7 +325,7 @@ function Table<T extends Record<string, unknown>>(
 
           {/* TABLE FOOTER is rendered here */}
 
-          <tfoot className="s">
+          <tfoot className="">
             {footerGroups.map((group, index) => {
               // console.log(group);
               return (

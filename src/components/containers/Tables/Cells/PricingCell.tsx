@@ -38,13 +38,13 @@ function PricingCell(props: EditableCellProps) {
     <>
       <div className="container-fluid print:hidden">
         <input
-          className="text-black form-control-sm w-75"
+          className="text-black custom-input w-100"
           type="number"
           value={value}
           step={0.05}
           onChange={onChange}
           onBlur={onBlur}
-          style={{ width: '50px' }}
+          // style={{ width: '50px' }}
         />
       </div>
     </>

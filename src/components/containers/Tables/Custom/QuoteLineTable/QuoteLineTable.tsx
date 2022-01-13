@@ -28,15 +28,15 @@ import {
   FilterProps,
 } from 'react-table';
 import { camelToWords, useDebounce } from 'utils';
-import { fuzzyTextFilter, numericTextFilter } from '../../Filters';
-import ResizeHandle from '../ResizeHandle';
+import { FuzzyText, NumericText } from '../../Filters';
+// import ResizeHandle from '../ResizeHandle';
 import {
   ArrowDownIcon,
   ArrowUpIcon,
   ArrowRightIcon,
 } from '@heroicons/react/outline';
 import { TableProperties } from '../types';
-import { QuoteLine } from 'store';
+import { QuoteLine, useAppSelector, editing } from 'store';
 
 const DefaultHeader: React.FC<HeaderProps<any>> = ({ column }: any) => (
   <>
@@ -106,8 +106,8 @@ const cellProps = <T extends Record<string, unknown>>(
 
 // Object containing our filterTypes
 const filterTypes = {
-  fuzzyText: fuzzyTextFilter,
-  numeric: numericTextFilter,
+  fuzzyText: FuzzyText,
+  numeric: NumericText,
 };
 
 // A Type to add our custom fields onto the headers
@@ -127,6 +127,7 @@ function QuoteLineTable<T extends Record<string, unknown>>(
     addonHooks,
     sortOptions,
   } = props;
+  const header = useAppSelector(editing);
 
   // Memo-ized defaultColumn object
   const defaultColumn = React.useMemo(
@@ -358,7 +359,7 @@ function QuoteLineTable<T extends Record<string, unknown>>(
                             <button
                               className="w-32 bg-white border rounded-md hover:bg-porter hover:text-white"
                               onClick={() => {
-                                console.log('clicky');
+                                window.location.href = `https://driveworks.litaniasports.com/Integration?User=jness&Run=Gym&Transition=edit&Specification=${header.quote_number}-Gym${currGym}`;
                               }}
                             >
                               Edit

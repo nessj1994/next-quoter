@@ -60,7 +60,7 @@ const PartCell = (props: CellProps<QuoteLine>): JSX.Element => {
       <div className="flex flex-col w-full">
         <div className="flex flex-row justify-between">
           <p>{original?.part_num?.toUpperCase()}</p>
-          {original.ac_gym_id !== 0 && (
+          {original.ac_gym_id !== 0 && original.ac_gym_id !== null && (
             <div>
               <Dropdown
                 items={[

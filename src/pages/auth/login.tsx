@@ -57,6 +57,7 @@ const Login: NextPage = (pageProps) => {
         height="2048"
         width="2048"
         alt="bg_we-do-the-imPossible"
+        priority={true}
       />
       <div className="z-50 flex flex-col items-center w-4/5 py-16 mr-4 bg-white border rounded-lg shadow-md opacity-95">
         <Formik

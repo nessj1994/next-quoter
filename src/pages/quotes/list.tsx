@@ -31,7 +31,7 @@ const QuoteList: NextPage = (pageProps) => {
   useEffect(() => {
     let mounted = true;
 
-    if (mounted && headers.length <= 0) {
+    if (mounted && document && headers.length <= 0) {
       dispatch(
         fetchQuotes(
           session?.user?.customer_id,
@@ -45,7 +45,7 @@ const QuoteList: NextPage = (pageProps) => {
     return () => {
       mounted = false;
     };
-  }, [dispatch, session, headers]);
+  }, [dispatch, session]);
 
   // Custom deletion hook to be passed to our table
   // This will append a delete button column to each row
@@ -135,22 +135,28 @@ const QuoteList: NextPage = (pageProps) => {
                   </div>
                 );
               },
-              align: 'left',
+              align: 'center',
               minWidth: 90,
               maxWidth: 112,
               hideFooter: true,
               disableGroupBy: true,
             },
             {
-              Header: 'Created On',
+              Header: 'Created',
               id: 'QuoteDate',
               canResize: true,
               accessor: (row: QuoteHeader) => {
-                return moment.utc(row.quote_date).format('M/D/YYYY');
+                return (
+                  <div className="overflow-hidden overflow-ellipsis">
+                    {moment.utc(row.quote_date).format('MM/DD/YYYY')}
+                  </div>
+                );
               },
               align: 'left',
-              minWidth: 90,
-              maxWidth: 124,
+              minWidth: 72,
+              width: 72,
+
+              maxWidth: 80,
               filter: 'fuzzyText',
               hideFooter: true,
               disableGroupBy: true,
@@ -160,15 +166,23 @@ const QuoteList: NextPage = (pageProps) => {
               id: 'QuoteTotalVal',
               canResize: true,
               accessor: (row: any) => {
-                return row.QuoteTotalVal?.toFixed(2);
+                // return Number(row.quote_total_val).toFixed(2);
+                return (
+                  <div>
+                    {Number('10000000').toLocaleString('en-us', {
+                      style: 'currency',
+                      currency: 'usd',
+                    })}
+                  </div>
+                );
               },
               align: 'left',
-              minWidth: 64,
-              maxWidth: 124,
+              width: 64,
+              maxWidth: 64,
               Cell: (row) => {
                 return (
                   <div className="overflow-hidden overflow-ellipsis">
-                    $ {row.cell.value}
+                    {row.cell.value}
                   </div>
                 );
               },
@@ -196,7 +210,8 @@ const QuoteList: NextPage = (pageProps) => {
               },
               align: 'left',
               minWidth: 90,
-              maxWidth: 164,
+              width: 140,
+              maxWidth: 140,
               filter: 'fuzzyText',
               disableGroupBy: true,
             },
@@ -213,8 +228,8 @@ const QuoteList: NextPage = (pageProps) => {
               // Footer: () => {
               //   return 'footer';
               // },
-              align: 'left',
-              minWidth: 40,
+              align: 'center',
+              width: 40,
               maxWidth: 64,
               hideFooter: false,
               filter: 'fuzzyText',
@@ -224,7 +239,7 @@ const QuoteList: NextPage = (pageProps) => {
               Header: 'Ship Date',
               id: 'ShipDate',
               accessor: (row: QuoteHeader) =>
-                row.ship_date ? moment(row.ship_date).format('M/D/YYYY') : '',
+                row.ship_date ? moment(row.ship_date).format('MM/DD/YYYY') : '',
               Cell: (row) => {
                 return (
                   <div className="inline-block overflow-hidden overflow-ellipsis">
@@ -236,8 +251,9 @@ const QuoteList: NextPage = (pageProps) => {
               //   return 'footer';
               // },
               align: 'left',
-              minWidth: 90,
-              maxWidth: 124,
+              width: 50,
+
+              maxWidth: 50,
               hideFooter: false,
               disableGroupBy: true,
             },
@@ -255,8 +271,8 @@ const QuoteList: NextPage = (pageProps) => {
                 );
               },
               align: 'left',
-              minWidth: 72,
-              maxWidth: 124,
+              width: 64,
+              maxWidth: 64,
               hideFooter: true,
               disableGroupBy: true,
             },
