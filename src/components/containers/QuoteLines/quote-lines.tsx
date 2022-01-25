@@ -30,6 +30,7 @@ import {
   quoteHeaderSelectors,
   editing,
 } from '../../../store';
+import { useSession } from 'next-auth/react';
 
 type ISelectionCellProps = {
   updateMyData: (props: any) => void;
@@ -114,6 +115,7 @@ const QuoteInfoLines = (props: any) => {
   const lines = useAppSelector((state) => quoteLinesSelectors.selectAll(state));
   const header = useAppSelector(editing);
   const dispatch = useAppDispatch();
+  const { data: session } = useSession();
 
   const { adminSetting, updateQuoteMultiplier } = props;
 
@@ -160,22 +162,23 @@ const QuoteInfoLines = (props: any) => {
     }
   }, [header]);
 
-  const handleDropDown = () => {
-    console.log('click');
-    toggleDrop(!showDrop);
-  };
-
   const handleDWLaunch = () => {
     const gymIndex = document.getElementById(
       'input-dw-launch',
     )! as HTMLSelectElement;
 
+    const custID = session.user?.customer_id;
+    const username = session.user?.username;
+
+    const loginID = custID === '800221' ? username : custID;
+
+    console.log('Launching driveworks with user: ', session.user.username);
     if (gymIndex.selectedIndex.valueOf() === 0) {
-      window.location.href = `https://driveworks.litaniasports.com/Integration?User=jness&Run=Gym&PorterJobNo=${
+      window.location.href = `https://driveworks.litaniasports.com/Integration?User=${loginID}&Run=Gym&PorterJobNo=${
         props.quote?.quote_number
       }&GymNo=${props.quote?.gyms + 1}`;
     } else {
-      window.location.href = `https://driveworks.litaniasports.com/Integration?User=jness&Run=Gym&Transition=edit&Specification=${
+      window.location.href = `https://driveworks.litaniasports.com/Integration?User=${loginID}&Run=Gym&Transition=edit&Specification=${
         props.quote?.quote_number
       }-Gym${gymIndex.selectedIndex.valueOf()}`;
     }
@@ -231,6 +234,7 @@ const QuoteInfoLines = (props: any) => {
                   // console.log(row);
                   return (
                     parseFloat(row.values['Weight']) *
+                      row.original.quantity *
                       Number(row.original.enabled) +
                     sum
                   );
@@ -246,6 +250,7 @@ const QuoteInfoLines = (props: any) => {
             },
             {
               Header: 'Qty',
+              id: 'quantity',
               accessor: 'quantity',
               Cell: EditableCell,
               hideFooter: false,
@@ -273,8 +278,6 @@ const QuoteInfoLines = (props: any) => {
               },
               Footer: (info: any) => {
                 const total = info.rows.reduce((sum: number, row: any) => {
-                  console.log('bippity boppity');
-                  console.log(row.original);
                   return (
                     row.original.item_cost * Number(row.original.enabled) + sum
                   );
@@ -291,11 +294,9 @@ const QuoteInfoLines = (props: any) => {
               disableFilters: true,
             },
             {
-              id: 'line_multiplier',
+              id: 'pricing_mode',
               Header: 'Pricing',
-              accessor: (row: QuoteLine) => {
-                return Number(row.line_multiplier).toFixed(2);
-              },
+              accessor: 'pricing_mode',
               Cell: PricingCell,
               hideHeader: !adminSetting,
               hideFooter: !adminSetting,
@@ -347,11 +348,7 @@ const QuoteInfoLines = (props: any) => {
               Header: 'Price',
               accessor: (row: QuoteLine) => {
                 if (row.configured) {
-                  return Number(
-                    row.unit_price! *
-                      props.quoteMultiplier *
-                      Number(row.enabled),
-                  ).toFixed(2);
+                  return Number(row.unit_price!).toFixed(2);
                 }
                 return Number(
                   row.unit_price! *
@@ -376,19 +373,7 @@ const QuoteInfoLines = (props: any) => {
             {
               Header: 'Line Total',
               accessor: (row: QuoteLine) => {
-                if (row.configured) {
-                  return Number(row.line_total * Number(row.enabled)).toFixed(
-                    2,
-                  );
-                } else {
-                  return Number(
-                    row.unit_price *
-                      row.quantity *
-                      row.line_multiplier *
-                      props.quoteMultiplier *
-                      Number(row.enabled),
-                  ).toFixed(2);
-                }
+                return Number(row.line_total * Number(row.enabled)).toFixed(2);
               },
               Cell: (props: CellProps<QuoteLine>): JSX.Element => {
                 return <span>$ {props.row.values['Line Total']}</span>;
@@ -503,7 +488,7 @@ const QuoteInfoLines = (props: any) => {
               >
                 {gymSelectOptions.map((value, index) => {
                   return (
-                    <option value={index} key={index}>
+                    <option value={index} key={`gym-select-${index}`}>
                       {value}
                     </option>
                   );
@@ -530,9 +515,10 @@ const QuoteInfoLines = (props: any) => {
           columns={columns}
           data={data}
           updateMyData={(updatedInfo) => {
-            const { original, index, id, value } = updatedInfo;
+            const { original, index, field, value } = updatedInfo;
             const temp = { ...original };
-            temp[`${id}`] = value;
+            temp[`${field}`] = value;
+            console.log('Now updating field: ', field, ' with value: ', value);
             dispatch(updateLine(temp));
             return true;
           }}
