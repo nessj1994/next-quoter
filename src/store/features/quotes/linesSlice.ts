@@ -173,8 +173,8 @@ export const updateLine = (updated: QuoteLine) => async (dispatch: any) => {
     updated,
     { withCredentials: true },
   );
-
-  dispatch(upsertLine(updated));
+  console.log(updated);
+  dispatch(upsertLine(response.data));
   return response;
 };
 
@@ -204,19 +204,21 @@ export const addNewLine =
 
 export const removeLine = (lineID: number) => async (dispatch: any) => {
   // const response = await axios.post()
-  const response = await api.get(
-    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/delete_line/${lineID}`,
+  const response = await api.delete(
+    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/${lineID}/`,
     {
       validateStatus(status: number) {
         let valid = status < 400;
         console.log(`Server response was valid: ${valid}`);
+
         return valid; // Resolve only if the status code is less than 500
       },
       withCredentials: true,
     },
   );
+  console.log(response);
 
-  if (response.data) {
+  if (response.status === 204) {
     console.log(lineID);
     dispatch(deleteLine(lineID));
   }
