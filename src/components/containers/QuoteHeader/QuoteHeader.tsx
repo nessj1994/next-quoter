@@ -101,14 +101,14 @@ const QuoteInfoHeader = React.memo((props: any) => {
     let quoteDate;
     let expires = new Date();
 
-    const validLength = data ? data.valid_length : 30;
+    const validLength = data ? data.valid_length : 60;
     console.log('Valid Length: ', validLength);
 
     if (data?.quote_date) {
       quoteDate = new Date(data.quote_date);
       expires.setDate(quoteDate.getDate() + validLength);
     } else {
-      expires.setDate(expires.getDate() + 30);
+      expires.setDate(expires.getDate() + 60);
     }
 
     return expires;
@@ -257,6 +257,7 @@ const QuoteInfoHeader = React.memo((props: any) => {
                   <InputField
                     name="cust_id"
                     type="text"
+                    disabled={!auth.data?.user?.is_staff}
                     placeholder="000000"
                     required
                   />
@@ -274,7 +275,8 @@ const QuoteInfoHeader = React.memo((props: any) => {
                   <DateField
                     name="expire_date"
                     placeholder="stuff"
-                    readOnly={auth.data?.user?.is_staff}
+                    disabled={!auth.data?.user?.is_staff}
+                    readOnly={!auth.data?.user?.is_staff}
                     required
                   />
                 </div>
