@@ -6,46 +6,58 @@ import {
   quoteHeaderSelectors,
   useAppDispatch,
   useAppSelector,
-  setEditing,
   QuoteHeader,
   fetchQuotes,
+  setEditing,
   markQuoteDeleted,
+  fetchCsrList,
 } from 'store';
 import Table from 'components/containers/Tables/Core';
 import { TrashIcon } from '@heroicons/react/outline';
 import { useSession } from 'next-auth/react';
+import { WrappedTable } from 'components/Table/WrappedTable';
 
 const QuoteList: NextPage = (pageProps) => {
   // Grab the dispatch function from our redux store
   const dispatch = useAppDispatch();
 
-  // Call useSession() to retrieve the session passed through our props
-  // Look below in getServerSideProps to see the where it is passed in
-  // In this case we require the session, and if it's not valid we send the user
-  // back to the the Login page
   const { data: session } = useSession();
+
+  const fetchIdRef = React.useRef(0);
+
   // Grab the headers from our redux store with our selector
   const headers = useAppSelector(quoteHeaderSelectors.selectAll);
 
-  // Effect
-  useEffect(() => {
-    let mounted = true;
+  const [pageCount, setPageCount] = React.useState(0);
+  const [ageFilter, setAgeFilter] = React.useState(90);
+  const [csrFilter, setCsrFilter] = React.useState(session.user.username);
 
-    if (mounted && document && headers.length <= 0) {
-      dispatch(
-        fetchQuotes(
-          session?.user?.customer_id,
-          session?.user?.username,
-          90,
-          false,
-        ),
-      );
-    }
+  const desiredPagesize = 20;
 
-    return () => {
-      mounted = false;
-    };
-  }, [dispatch, session]);
+  const fetchData = React.useCallback(
+    async (props: { pageIndex: number; pageSize: number; filter: string }) => {
+      const fetchId = ++fetchIdRef.current;
+
+      if (fetchId === fetchIdRef.current) {
+        let response = await dispatch(
+          fetchQuotes(
+            session?.user?.customer_id,
+            csrFilter,
+            ageFilter,
+            false,
+            props.pageIndex,
+            props.pageSize,
+            props.filter,
+          ),
+        );
+
+        console.log(response.data.count / desiredPagesize);
+
+        setPageCount(Math.ceil(response.data?.count / desiredPagesize));
+      }
+    },
+    [ageFilter, csrFilter, session, dispatch],
+  );
 
   // Custom deletion hook to be passed to our table
   // This will append a delete button column to each row
@@ -58,6 +70,7 @@ const QuoteList: NextPage = (pageProps) => {
         id: '_deletor',
         disableResizing: true,
         disableGroupBy: true,
+        disableFilters: true,
         maxWidth: 64,
         align: 'center',
         hideFooter: true,
@@ -105,9 +118,6 @@ const QuoteList: NextPage = (pageProps) => {
   // This will allow us to add other custom hooks later if we want
   const addonHooks = [deletionHook];
 
-  // Define the columns for our table
-  // ! useMemo is critical here as it prevents us from
-  // ! recalculating the data unlessa dependency has changed.
   const columns = React.useMemo(
     () =>
       [
@@ -119,8 +129,7 @@ const QuoteList: NextPage = (pageProps) => {
           canResize: false,
           columns: [
             {
-              Header: 'Quote #',
-              id: 'QuoteNumber',
+              id: 'Quote #',
               canResize: true,
               accessor: 'quote_number',
               Cell: (row) => {
@@ -136,14 +145,14 @@ const QuoteList: NextPage = (pageProps) => {
                 );
               },
               align: 'center',
+              canFilter: false,
               minWidth: 90,
               maxWidth: 112,
               hideFooter: true,
               disableGroupBy: true,
             },
             {
-              Header: 'Created',
-              id: 'QuoteDate',
+              id: 'Created',
               canResize: true,
               accessor: (row: QuoteHeader) => {
                 return (
@@ -153,23 +162,22 @@ const QuoteList: NextPage = (pageProps) => {
                 );
               },
               align: 'left',
-              minWidth: 72,
-              width: 72,
+              minWidth: 110,
+              width: 110,
+              maxWidth: 110,
+              disableFilters: true,
 
-              maxWidth: 80,
               filter: 'fuzzyText',
               hideFooter: true,
               disableGroupBy: true,
             },
             {
-              Header: 'Total',
-              id: 'QuoteTotalVal',
+              id: 'Total',
               canResize: true,
               accessor: (row: any) => {
-                // return Number(row.quote_total_val).toFixed(2);
                 return (
                   <div>
-                    {Number('10000000').toLocaleString('en-us', {
+                    {Number(row.quote_total_val).toLocaleString('en-us', {
                       style: 'currency',
                       currency: 'usd',
                     })}
@@ -177,8 +185,9 @@ const QuoteList: NextPage = (pageProps) => {
                 );
               },
               align: 'left',
-              width: 64,
-              maxWidth: 64,
+              minWidth: 110,
+              width: 110,
+              maxWidth: 110,
               Cell: (row) => {
                 return (
                   <div className="overflow-hidden overflow-ellipsis">
@@ -187,12 +196,12 @@ const QuoteList: NextPage = (pageProps) => {
                 );
               },
               filter: 'fuzzyText',
+              disableFilters: true,
               hideFooter: true,
               disableGroupBy: true,
             },
             {
-              id: 'ShipTo',
-              Header: 'Ship To',
+              id: 'Ship To',
               hideFooter: true,
               accessor: 'ship_name',
               Cell: (row: any) => {
@@ -209,14 +218,14 @@ const QuoteList: NextPage = (pageProps) => {
                 );
               },
               align: 'left',
-              minWidth: 90,
+              minWidth: 110,
               width: 140,
               maxWidth: 140,
               filter: 'fuzzyText',
+              disableFilters: true,
               disableGroupBy: true,
             },
             {
-              Header: 'State',
               id: 'State',
               accessor: (row: QuoteHeader) => {
                 return (
@@ -233,11 +242,12 @@ const QuoteList: NextPage = (pageProps) => {
               maxWidth: 64,
               hideFooter: false,
               filter: 'fuzzyText',
+              disableFilters: true,
+
               disableGroupBy: true,
             },
             {
-              Header: 'Ship Date',
-              id: 'ShipDate',
+              id: 'Ship Date',
               accessor: (row: QuoteHeader) =>
                 row.ship_date ? moment(row.ship_date).format('MM/DD/YYYY') : '',
               Cell: (row) => {
@@ -250,16 +260,17 @@ const QuoteList: NextPage = (pageProps) => {
               // Footer: () => {
               //   return 'footer';
               // },
-              align: 'left',
-              width: 50,
-
-              maxWidth: 50,
+              align: 'center',
+              minWidth: 100,
+              width: 100,
+              maxWidth: 100,
               hideFooter: false,
+              disableFilters: true,
+
               disableGroupBy: true,
             },
             {
-              id: 'Created By',
-              Header: 'Created By',
+              id: 'Creator',
               accessor: 'quote_user',
               Cell: (row) => {
                 return (
@@ -273,6 +284,8 @@ const QuoteList: NextPage = (pageProps) => {
               align: 'left',
               width: 64,
               maxWidth: 64,
+              disableFilters: true,
+
               hideFooter: true,
               disableGroupBy: true,
             },
@@ -282,53 +295,103 @@ const QuoteList: NextPage = (pageProps) => {
     [headers], // Our dependency array contains the headers so the table gets rebuilt when our header array changes
   );
 
+  const [csrList, setCsrList] = React.useState<Array<any>>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetch = async () => {
+      let csrs = await dispatch(fetchCsrList());
+
+      if (csrs) {
+        console.log(csrs);
+        setCsrList(csrs);
+      }
+    };
+    if (mounted) {
+      fetch();
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [dispatch]);
+
+  const handleAgeFilterChange = (e: any) => {
+    console.log('Age filter changed to :', e.target.value);
+    setAgeFilter(e.target.value);
+  };
+
+  const handleCSRFilterChange = (e: any) => {
+    console.log('Age filter changed to :', e.target.value);
+    setCsrFilter(e.target.value);
+  };
+  const Toolbar = session ? (
+    <>
+      <div className="flex flex-row flex-1 m-auto bg-transparent justify-start gap-3  ">
+        <div className="flex  flex-row flex-1 gap-3">
+          <div className="px-3 py-3 mx-auto ml-3 font-bold bg-white rounded-md shadow-lg ">
+            {`Welcome back, ${session.user?.first_name}`}
+          </div>
+          <div className="flex-1">
+            <label htmlFor="csr-select">Quotes for:</label>
+            <select
+              id="csr-select"
+              className="px-3 py-3 mx-auto ml-3  bg-gray-200 rounded-md "
+              value={csrFilter}
+              onChange={handleCSRFilterChange}
+            >
+              {csrList.length > 0 ? (
+                csrList.map((csr: any) => (
+                  <option key={`csr-list-${csr.user_id}`} value={csr.username}>
+                    {csr.username}
+                  </option>
+                ))
+              ) : (
+                <option value={0}>No CSRs</option>
+              )}
+            </select>
+          </div>
+        </div>
+        <select
+          className="px-3 my-1 mr-3"
+          defaultValue={ageFilter}
+          onChange={handleAgeFilterChange}
+        >
+          <option value={30}>30 days</option>
+          <option value={90}>90 days</option>
+          <option value={180}>180 days</option>
+          <option value={365}>365 days</option>
+          <option value={365 * 3}>3+ years</option>
+        </select>
+      </div>
+    </>
+  ) : null;
+
   if (session) {
-    // Time for returning
-    // Return the table element passing in:
-    // - Our columns array built above
-    // - Header data loaded from the redux store
-    // - updateMyData callback function if needed
-    // - The sortOptions for default sorting setup
-    // - The addonHooks array containing any custom hooks
     return (
       <div className="flex-col justify-start flex-shrink w-full h-screen py-6">
         {session && (
-          <>
-            <div className="flex flex-row m-auto bg-transparent ">
-              <span className="px-3 py-3 mx-auto ml-3 font-bold bg-white rounded-md shadow-lg">{`Welcome back, ${session.user?.first_name}`}</span>
-
-              <select className="px-3 my-1 mr-3">
-                <option>default</option>
-              </select>
-            </div>
-            <div className="px-3 rounded-md ">
-              <Table<QuoteHeader>
-                name="quote-list-table"
-                columns={columns}
-                data={headers}
-                // adminSetting={session.user?.is_admin}
-                updateMyData={(updatedInfo) => {
-                  return true;
-                }}
-                sortOptions={{ id: 'QuoteDate', desc: true }}
-                addonHooks={addonHooks}
-              />
-            </div>
-          </>
+          <div className="px-3 rounded-md ">
+            <WrappedTable<QuoteHeader>
+              name="quote-list-table"
+              columns={columns}
+              data={headers}
+              toolbarPlugin={Toolbar}
+              // adminSetting={session.user?.is_admin}
+              // updateMyData={(updatedInfo) => {
+              //   return true;
+              // }}
+              fetchData={fetchData}
+              controlledPageCount={pageCount}
+              sortOptions={{ id: 'QuoteDate', desc: true }}
+              addonHooks={addonHooks}
+            />
+          </div>
         )}
       </div>
     );
   }
 };
 
-// // * Load session from nextauth provider before displaying page
-// export const getServerSideProps: GetServerSideProps = async (context) => {
-//   return {
-//     props: {
-//       session: await getSession(context),
-//     },
-//   };
-// };
 QuoteList.auth = true;
 // Default export is default
 export default QuoteList;
