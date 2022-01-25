@@ -101,6 +101,8 @@ const Navbar = (props: any) => {
                           auth?.user?.customer_id,
                           auth?.user.username,
                           90,
+                          false,
+                          1,
                         ),
                       );
                     }}

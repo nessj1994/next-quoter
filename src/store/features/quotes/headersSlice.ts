@@ -65,27 +65,42 @@ const quoteSlice = createSlice({
 
 // Thunks
 export const fetchQuotes =
-  (customer_id: string, csr = '', age = 365 * 2, includeDeleted = false) =>
+  (
+    customer_id: string,
+    csr = '',
+    age = 90,
+    includeDeleted = false,
+    page,
+    pageSize = 10,
+    filter = undefined,
+  ) =>
   async (dispatch: any) => {
     const convertedAge = moment()
       .subtract(age, 'days')
       .format('YYYY-MM-DD HH:MM:ss');
-    console.log(convertedAge);
     dispatch(setLoading(true));
-
+    console.log('Fetch quotes was passed the following for csr: ', csr);
     await dispatch(emptyQuoteList());
-    const response: AxiosResponse<{ results: Array<QuoteHeader> }, any> =
-      await api.get(
-        `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/?cust_id=${customer_id}&quote_date__gte=${convertedAge}`,
-        {
-          withCredentials: true,
-        },
-      );
+    let url = `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/?cust_id=${customer_id}&quote_date__gte=${convertedAge}&page=${page}&page_size=${pageSize}`;
+    if (csr) url += `&quote_user=${csr}`;
+    if (filter) url += `&quote_number__contains=${filter}`;
+    const response: AxiosResponse<any, any> = await api.get(url, {
+      withCredentials: true,
+    });
     console.log(response.data?.results);
     await dispatch(loadQuotes(response.data?.results));
     dispatch(setLoading(false));
-    return response.data.results;
+    return response;
   };
+
+export const fetchCsrList = () => async (dispatch: any) => {
+  const url = `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/users/coworkers/`;
+  const response = await api.get(url, {
+    withCredentials: true,
+  });
+  console.log(response.data);
+  return response.data;
+};
 
 export const markQuoteDeleted =
   (quote: QuoteHeader, custID: number) => async (dispatch: any) => {
