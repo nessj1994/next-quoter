@@ -342,8 +342,9 @@ function QuoteLineTable<T extends Record<string, unknown>>(
                       <tr
                         {...row.getRowProps()}
                         className="table-row gap-1 row print:gap-0"
+                        key={`gym-header-${row.original.ac_gym_id}`}
                       >
-                        <span className="flex items-center w-full h-12 gap-3 bg-gray-100">
+                        <div className="flex items-center w-full h-12 gap-3 bg-gray-100">
                           <td className="flex w-48">
                             <button
                               disabled
@@ -365,7 +366,7 @@ function QuoteLineTable<T extends Record<string, unknown>>(
                               Edit
                             </button>
                           </td>
-                        </span>
+                        </div>
                       </tr>
                     )}
                     {renderRow({ ...row })}
@@ -386,7 +387,7 @@ function QuoteLineTable<T extends Record<string, unknown>>(
                 <tr
                   className="gap-1"
                   {...group.getFooterGroupProps()}
-                  key={index}
+                  key={`line-footer-group-${index}`}
                 >
                   {group.headers.map((column: ExtendedHeaderProps) => {
                     return !column.hideHeader ? (

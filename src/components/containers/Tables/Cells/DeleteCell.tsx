@@ -20,14 +20,14 @@ function DeletionCell(props: DeletionCellProps) {
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>): void => {
     e.preventDefault();
     console.log('clicky');
-    dispatch(removeLine(original.LineID));
+    dispatch(removeLine(original.line_id));
   };
 
   // If the initialValue is changed external, sync it up with our state
 
   return (
     <>
-      {original.ACGymID <= 0 && (
+      {!original.ac_gym_id && (
         <button type="submit" onClick={handleClick}>
           <TrashIcon className="inline w-5 h-5 mx-3" />
         </button>
