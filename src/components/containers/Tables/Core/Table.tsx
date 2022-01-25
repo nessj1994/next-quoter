@@ -262,13 +262,13 @@ function Table<T extends Record<string, unknown>>(
             id="table-head"
             className="sticky top-0 table-header-group bg-white border-b-2"
           >
-            {headerGroups.map((headerGroup) => (
+            {headerGroups.map((headerGroup, index) => (
               // Table header row - normally <tr>
               <tr
                 {...headerGroup.getHeaderGroupProps()}
                 id="table-row"
                 className="table-row gap-1 row print:gap-0"
-                key="row"
+                key={`header-group-${index}`}
               >
                 {/* Table Headers mapped from array - normally <th> */}
                 {headerGroup.headers.map((column) => {
@@ -332,7 +332,7 @@ function Table<T extends Record<string, unknown>>(
                 <tr
                   className="gap-1"
                   {...group.getFooterGroupProps()}
-                  key={index}
+                  key={`table-footer-${index}`}
                 >
                   {group.headers.map((column: ExtendedHeaderProps) => {
                     return !column.hideHeader ? (
