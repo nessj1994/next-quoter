@@ -1,6 +1,5 @@
 // credit to https://dev.to/gabe_ragland/debouncing-with-react-hooks-jci
 // and https://codesandbox.io/s/github/ggascoigne/react-table-example?file=/src/utils/useDebounce.tsx:0-1424
-
 import { useEffect, useState } from 'react';
 
 // Our hook
@@ -35,4 +34,13 @@ export function useDebounce(value: any, delay: number): any {
   );
 
   return debouncedValue;
+}
+
+export function debounce(fn: (args: any) => void, timeout: number = 1000) {
+  let timer: ReturnType<typeof setTimeout>;
+  return (...args: any[]) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), timeout);
+    console.log('debounce', timer);
+  };
 }
