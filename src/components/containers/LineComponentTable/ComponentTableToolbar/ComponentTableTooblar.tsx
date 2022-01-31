@@ -33,22 +33,20 @@ const ComponentTableToolbar = (props: { lineID: number }) => {
         <p> Add Component </p>
       </strong>
       <div className="container">
-        <div className="row row-cols-5">
+        <div className="flex flex-row gap-1">
           <div className="col">
             <div className="form-group">
               <label className="form-label " htmlFor="input-add-component">
                 Seq
               </label>
 
-              <div className="input-group new-item">
-                <input
-                  type="text"
-                  className="form-control form-control-sm "
-                  id="input-component-sequence"
-                  defaultValue="999"
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddComponent(e)}
-                />
-              </div>
+              <input
+                type="text"
+                className="custom-input "
+                id="input-component-sequence"
+                defaultValue="999"
+                onKeyPress={(e) => e.key === 'Enter' && handleAddComponent(e)}
+              />
             </div>
           </div>
 
@@ -61,7 +59,7 @@ const ComponentTableToolbar = (props: { lineID: number }) => {
               <div className="input-group new-item">
                 <input
                   type="text"
-                  className="form-control form-control-sm "
+                  className="custom-input "
                   id="input-component-part"
                   placeholder="Part Num"
                   onKeyPress={(e) => e.key === 'Enter' && handleAddComponent(e)}
@@ -102,7 +100,7 @@ const ComponentTableToolbar = (props: { lineID: number }) => {
                 <input
                   type="number"
                   step={1}
-                  className="form-control form-control-sm "
+                  className="custom-input"
                   id="input-comp-qty"
                   placeholder="Qty"
                   onKeyPress={(e) => e.key === 'Enter' && handleAddComponent(e)}
@@ -114,7 +112,7 @@ const ComponentTableToolbar = (props: { lineID: number }) => {
           <div className="col">
             <button
               type="button"
-              className="btn btn-primary"
+              className="p-2 bg-white text-porter hover:bg-porter hover:text-white rounded-xl border border-porter"
               onClick={handleAddComponent}
             >
               Add
