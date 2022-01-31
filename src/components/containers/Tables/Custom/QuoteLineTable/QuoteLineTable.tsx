@@ -255,7 +255,7 @@ function QuoteLineTable<T extends Record<string, unknown>>(
       <div className="my-3 overflow-x-auto bg-white bg-opacity-50 rounded-lg shadow-lg print:border-none print:m-0 print:overflow-visible">
         {/* The table root - normally <table> */}
         <table
-          id="table"
+          id="line-table"
           {...getTableProps()}
           className={`w-full h-full relative `}
         >
@@ -346,12 +346,14 @@ function QuoteLineTable<T extends Record<string, unknown>>(
                       >
                         <div className="flex items-center w-full h-12 gap-3 bg-gray-100">
                           <td className="flex w-48">
-                            <button
-                              disabled
-                              className="w-24 bg-white border rounded-md disabled:pointer-events-none disabled:bg-gray-200 hover:bg-porter hover:text-white"
-                            >
-                              Lock
-                            </button>
+                            {adminSetting ? (
+                              <button
+                                disabled
+                                className="w-24 bg-white border rounded-md disabled:pointer-events-none disabled:bg-gray-200 hover:bg-porter hover:text-white"
+                              >
+                                Lock
+                              </button>
+                            ) : null}
                           </td>
                           <td className="w-1/3 font-semibold capitalize">
                             Gym {currGym}

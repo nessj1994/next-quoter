@@ -97,8 +97,11 @@ function PricingCell({
           </select>
         </div>
         {initialValue !== 1 && initialValue !== '1' ? (
-          <div className="container">
-            <label htmlFor="pricing">Multiplier</label>
+          <div
+            key={`line-multiplier-${original.line_number}`}
+            className="container"
+          >
+            <label htmlFor="multiplier">Multiplier</label>
             <input
               id="line-multiplier"
               className="text-black custom-input w-100"
@@ -110,10 +113,10 @@ function PricingCell({
             />
           </div>
         ) : (
-          <div className="container">
-            <label htmlFor="pricing">Price</label>
+          <div key={`man-price-${original.line_number}`} className="container">
+            <label htmlFor="man-price">Price</label>
             <input
-              id="manual-price"
+              id="man-price"
               className="text-black custom-input w-100"
               defaultValue={value.manual_price}
               onChange={onChangeManualPrice}

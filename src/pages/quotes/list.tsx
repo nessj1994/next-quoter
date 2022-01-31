@@ -30,24 +30,29 @@ const QuoteList: NextPage = (pageProps) => {
 
   const [pageCount, setPageCount] = React.useState(0);
   const [ageFilter, setAgeFilter] = React.useState(90);
+  const [cuidFilter, setCuidFilter] = React.useState(
+    session.user?.customer_id ?? '',
+  );
+
+  console.log(cuidFilter);
   const [csrFilter, setCsrFilter] = React.useState(session.user.username);
 
   const desiredPagesize = 20;
 
   const fetchData = React.useCallback(
-    async (props: { pageIndex: number; pageSize: number; filter: string }) => {
+    async (props: { pageIndex: number; pageSize: number; filters: string }) => {
       const fetchId = ++fetchIdRef.current;
 
       if (fetchId === fetchIdRef.current) {
         let response = await dispatch(
           fetchQuotes(
-            session?.user?.customer_id,
+            cuidFilter,
             csrFilter,
             ageFilter,
             false,
             props.pageIndex,
             props.pageSize,
-            props.filter,
+            props.filters,
           ),
         );
 
@@ -56,7 +61,7 @@ const QuoteList: NextPage = (pageProps) => {
         setPageCount(Math.ceil(response.data?.count / desiredPagesize));
       }
     },
-    [ageFilter, csrFilter, session, dispatch],
+    [ageFilter, csrFilter, cuidFilter, session, dispatch],
   );
 
   // Custom deletion hook to be passed to our table
@@ -151,6 +156,12 @@ const QuoteList: NextPage = (pageProps) => {
               hideFooter: true,
               disableGroupBy: true,
             },
+            // {
+            //   id: 'Gyms',
+            //   accessor: 'gyms',
+            //   disableFilters: true,
+            //   show
+            // },
             {
               id: 'Created',
               canResize: true,
@@ -222,7 +233,6 @@ const QuoteList: NextPage = (pageProps) => {
               width: 140,
               maxWidth: 140,
               filter: 'fuzzyText',
-              disableFilters: true,
               disableGroupBy: true,
             },
             {
@@ -296,7 +306,7 @@ const QuoteList: NextPage = (pageProps) => {
   );
 
   const [csrList, setCsrList] = React.useState<Array<any>>([]);
-
+  //  TODO: add cuidFilter to the deps list and update the fetch to use it
   useEffect(() => {
     let mounted = true;
     const fetch = async () => {
@@ -321,34 +331,56 @@ const QuoteList: NextPage = (pageProps) => {
   };
 
   const handleCSRFilterChange = (e: any) => {
-    console.log('Age filter changed to :', e.target.value);
+    console.log('CSR filter changed to :', e.target.value);
     setCsrFilter(e.target.value);
   };
+
+  const handleCuidFilterChange = (e: any) => {
+    console.log('CUID filter changed to :', e.target.value);
+    setCuidFilter(e.target.value);
+  };
+
   const Toolbar = session ? (
     <>
-      <div className="flex flex-row flex-1 m-auto bg-transparent justify-start gap-3  ">
-        <div className="flex  flex-row flex-1 gap-3">
+      <div className="flex flex-row justify-start flex-1 gap-3 m-auto bg-transparent ">
+        <div className="flex flex-row flex-1 gap-3">
           <div className="px-3 py-3 mx-auto ml-3 font-bold bg-white rounded-md shadow-lg ">
             {`Welcome back, ${session.user?.first_name}`}
           </div>
-          <div className="flex-1">
-            <label htmlFor="csr-select">Quotes for:</label>
-            <select
-              id="csr-select"
-              className="px-3 py-3 mx-auto ml-3  bg-gray-200 rounded-md "
-              value={csrFilter}
-              onChange={handleCSRFilterChange}
-            >
-              {csrList.length > 0 ? (
-                csrList.map((csr: any) => (
-                  <option key={`csr-list-${csr.user_id}`} value={csr.username}>
-                    {csr.username}
-                  </option>
-                ))
-              ) : (
-                <option value={0}>No CSRs</option>
-              )}
-            </select>
+          <div className="flex flex-1 gap-3">
+            {session.user?.is_staff ? (
+              <div className="flex flex-col">
+                <label htmlFor="cuid-select">Cuid</label>
+                <input
+                  type="text"
+                  className=" custom-input"
+                  onChange={handleCuidFilterChange}
+                />
+              </div>
+            ) : null}
+            <div className="flex flex-col">
+              <label htmlFor="cuid-select">Users</label>
+
+              <select
+                id="csr-select"
+                className="px-3 py-3 bg-gray-200 rounded-md "
+                value={csrFilter}
+                onChange={handleCSRFilterChange}
+              >
+                {csrList.length > 0 ? (
+                  csrList.map((csr: any) => (
+                    <option
+                      key={`csr-list-${csr.user_id}`}
+                      value={csr.username}
+                    >
+                      {csr.username}
+                    </option>
+                  ))
+                ) : (
+                  <option value={0}>No CSRs</option>
+                )}
+              </select>
+            </div>
           </div>
         </div>
         <select

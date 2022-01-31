@@ -34,6 +34,7 @@ function EditableCell(props: EditableCellProps) {
     <>
       <div className="text-black">
         <input
+          className={`${original.enabled ? '' : 'line-through'}`}
           disabled={
             original.ac_gym_id >= 1
               ? true

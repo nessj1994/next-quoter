@@ -168,13 +168,13 @@ export function WrappedTable<T extends Record<string, unknown>>(
     let filter = undefined;
 
     if (filters[0]) filter = filters[0].value;
-
+    console.log('FILTERS: ', filters);
     console.log(filter);
     if (mounted) {
       fetchData({
         pageIndex: fetchIndex,
         pageSize,
-        filter: filter,
+        filters: filters,
       });
     }
 

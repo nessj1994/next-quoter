@@ -26,25 +26,27 @@ function MarginCell(props: CellProps<QuoteLine>) {
     };
   }, [dispatch, current]);
 
-  const itemCost = original.item_cost;
   const enabled = Number(original.enabled);
+  const itemCost = original.item_cost;
 
-  const price =
-    original.unit_price! *
-    original!.line_multiplier *
-    current!.quote_multiplier;
+  const price = original.unit_price! * current!.quote_multiplier;
+  console.log(price);
   const profit = price - itemCost;
-
-  const margin = profit / price;
+  console.log(profit);
+  let margin = profit / price;
+  if (!margin) {
+    margin = 0;
+    console.log(margin);
+  }
   return (
     <div
-      className="container td"
+      className={`${enabled ? '' : 'line-through'}`}
       style={{
         whiteSpace: 'nowrap',
         textOverflow: 'ellipsis',
       }}
     >
-      {`% ${Number(margin * 100 * enabled).toFixed(2)}`}
+      {`% ${Number(margin * 100).toFixed(2)}`}
     </div>
   );
 }
