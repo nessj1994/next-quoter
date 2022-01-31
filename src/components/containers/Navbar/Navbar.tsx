@@ -32,13 +32,16 @@ import { useEffect } from 'react';
 import {
   emptyQuoteList,
   getAdminEnabled,
+  searchQuotes,
 } from 'store/features/quotes/headersSlice';
 import { signOut, useSession } from 'next-auth/react';
 import AdminSwitch from 'components/elements/AdminSwitch';
+import { useRouter } from 'next/router';
 
 const Navbar = (props: any) => {
   const current = useAppSelector(editing);
   const adminOn = useAppSelector(getAdminEnabled);
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const { data: auth, status } = useSession();
   // const quoteHeaders = useQuoteHeaders();
@@ -50,7 +53,7 @@ const Navbar = (props: any) => {
   //   auth.toggleAdminMode(e.target.checked);
   // };
 
-  const handleQuoteSearch = () => {
+  const handleQuoteSearch = async () => {
     const searchFor = document.getElementById(
       'sidenav-user-search',
     ) as HTMLInputElement;
@@ -60,7 +63,11 @@ const Navbar = (props: any) => {
     }
     console.log(searchFor.value);
     setExpandSearch(false);
-    dispatch(fetchQuotes(searchFor.value));
+    let answer = await dispatch(searchQuotes(searchFor.value));
+    console.log(answer.data);
+    if (answer) {
+      router.push(`/quotes/info/${answer.data.quote_number}`);
+    }
     searchFor.value = '';
   };
 
@@ -116,71 +123,77 @@ const Navbar = (props: any) => {
               </div>
             </div>
           </li>
-          {/* {auth.state.isAdmin ? ( */}
-          <li
-            data-bs-toggle="searchCollapse"
-            data-bs-target="#searchCollapse"
-            aria-expanded="false"
-            aria-controls="collapseExample"
-            onClick={(e: any) => {
-              setExpandSearch(!expandSearch);
-            }}
-          >
-            <div className="justify-content-between">
-              <Link href="#" passHref>
-                <span className="nav-item">
-                  <SearchIcon className="inline w-5 h-5 mr-3" />
-                  Search
-                  {expandSearch ? (
-                    <ArrowDownIcon className="inline w-5 h-5 ml-3" />
-                  ) : (
-                    <ArrowRightIcon className="inline w-5 h-5 ml-3" />
-                  )}
-                </span>
-              </Link>
-            </div>
-            <div
-              className={`collapse ${expandSearch ? 'visible' : 'hidden'}`}
-              id="searchCollapse"
+          {auth?.user?.is_staff ? (
+            <li
+              data-bs-toggle="searchCollapse"
+              data-bs-target="#searchCollapse"
+              aria-expanded="false"
+              aria-controls="collapseExample"
+              onClick={(e: any) => {
+                setExpandSearch(!expandSearch);
+              }}
             >
-              <div className="card card-body show">
-                <div className="form-group d-flex w-100">
-                  <label
-                    className="float:top text-nowrap"
-                    htmlFor="sidenav-user-search"
-                  >
-                    User / Customer
-                  </label>
-                  <div className="input-group" style={{ zIndex: 99999 }}>
-                    <input
-                      type="text"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          handleQuoteSearch();
-                        }
-                      }}
-                      id="sidenav-user-search"
-                      className="form-control"
-                      placeholder=""
-                    />
-                    <button
-                      type="submit"
-                      className="btn btn-primary"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleQuoteSearch();
-                      }}
+              <div className="justify-content-between">
+                <Link href="#" passHref>
+                  <span className="nav-item">
+                    <SearchIcon className="inline w-5 h-5 mr-3" />
+                    Search
+                    {expandSearch ? (
+                      <ArrowDownIcon className="inline w-5 h-5 ml-3" />
+                    ) : (
+                      <ArrowRightIcon className="inline w-5 h-5 ml-3" />
+                    )}
+                  </span>
+                </Link>
+              </div>
+              <div
+                className={`collapse my-1 ${
+                  expandSearch ? 'visible' : 'hidden'
+                }`}
+                id="searchCollapse"
+              >
+                <div className="border card card-body show border-1">
+                  <div className="form-group d-flex w-100">
+                    <label
+                      className="float:top text-nowrap "
+                      htmlFor="sidenav-user-search"
                     >
-                      Search
-                    </button>
+                      <strong>Quote #</strong>
+                    </label>
+                    <div
+                      className="flex items-center border custom-input border-porter"
+                      style={{ zIndex: 99999 }}
+                    >
+                      <input
+                        type="text"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleQuoteSearch();
+                          }
+                        }}
+                        id="sidenav-user-search"
+                        className=""
+                        placeholder=""
+                      />
+                      <button
+                        type="submit"
+                        className="w-full min-h-full bg-blue-300 rounded-md "
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleQuoteSearch();
+                        }}
+                      >
+                        Search
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </li>
+            </li>
+          ) : null}
 
           <li>
             <div className="row align-items-center d-flex w-100">
@@ -204,7 +217,7 @@ const Navbar = (props: any) => {
           </li>
           {auth?.user?.is_staff ? (
             <li>
-              <span className="nav-item flex flex-row  justify-between">
+              <span className="flex flex-row justify-between nav-item">
                 <Link
                   href={`${process.env.NEXT_PUBLIC_SERVER_HOST}/admin`}
                   passHref
