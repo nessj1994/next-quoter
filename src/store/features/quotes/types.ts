@@ -135,11 +135,22 @@ export type LineComponent = {
   Weight: number;
 };
 
+type Filters = {
+  page: number;
+  page_size: number;
+  quote_number?: string | null | undefined;
+  ship_name?: string | null | undefined;
+  search?: string | null | undefined;
+  status?: string | null | undefined;
+  cust_id?: string | null | undefined;
+  age?: number | null | undefined;
+};
+
 // The state of our Quote Header data
 export type QuoteHeaderState = {
   loading: boolean;
-  ageSelection: number;
   adminEnabled: boolean;
+  fetchFilters: Partial<Filters>;
   currentQuote: QuoteHeader | Partial<QuoteHeader>;
 };
 export type QuoteLine = {

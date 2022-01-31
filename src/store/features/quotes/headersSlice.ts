@@ -22,7 +22,12 @@ const quotesAdapter = createEntityAdapter<QuoteHeader>({
 
 const initialState = quotesAdapter.getInitialState<QuoteHeaderState>({
   loading: false,
-  ageSelection: 90,
+  fetchFilters: {
+    page: 1,
+    age: 90,
+    page_size: 10,
+  },
+  adminEnabled: false,
   currentQuote: <QuoteHeader>{},
 });
 const quoteSlice = createSlice({
@@ -53,7 +58,7 @@ const quoteSlice = createSlice({
       }
     },
     ageChoiceUpdated: (state, action) => {
-      state.ageSelection = action.payload.age;
+      state.fetchFilters.age = action.payload.age;
     },
     deleteQuote: quotesAdapter.removeOne,
     emptyQuoteList: quotesAdapter.removeAll,
@@ -70,9 +75,9 @@ export const fetchQuotes =
     csr = '',
     age = 90,
     includeDeleted = false,
-    page,
+    page = 1,
     pageSize = 10,
-    filter = undefined,
+    filters,
   ) =>
   async (dispatch: any) => {
     const convertedAge = moment()
@@ -83,7 +88,15 @@ export const fetchQuotes =
     await dispatch(emptyQuoteList());
     let url = `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/?cust_id=${customer_id}&quote_date__gte=${convertedAge}&page=${page}&page_size=${pageSize}`;
     if (csr) url += `&quote_user=${csr}`;
-    if (filter) url += `&quote_number__contains=${filter}`;
+    console.log(filters);
+    filters?.map((filter) => {
+      console.log('Filter: ', filter);
+      if (filter.id === 'Quote #') {
+        url += `&quote_number__contains=${filter.value}`;
+      } else if (filter.id === 'Ship To') {
+        url += `&ship_name__contains=${filter.value}`;
+      }
+    });
     const response: AxiosResponse<any, any> = await api.get(url, {
       withCredentials: true,
     });
@@ -93,7 +106,31 @@ export const fetchQuotes =
     return response;
   };
 
+export const searchQuotes = (quote_num: string) => async (dispatch: any) => {
+  dispatch(setLoading(true));
+  await dispatch(emptyQuoteList());
+  const url = `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/search/?q=${quote_num}`;
+  const response: AxiosResponse<any, any> = await api.get(url, {
+    withCredentials: true,
+  });
+  console.log(response.data);
+  await dispatch(loadQuotes(response.data));
+  await dispatch(setEditing(response.data));
+  dispatch(setLoading(false));
+
+  return response.data;
+};
+
 export const fetchCsrList = () => async (dispatch: any) => {
+  const url = `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/users/coworkers/`;
+  const response = await api.get(url, {
+    withCredentials: true,
+  });
+  console.log(response.data);
+  return response.data;
+};
+
+export const fetchCuidList = () => async (dispatch: any) => {
   const url = `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/users/coworkers/`;
   const response = await api.get(url, {
     withCredentials: true,

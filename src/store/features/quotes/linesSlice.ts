@@ -98,20 +98,22 @@ export const retrieveFile =
   async (dispatch: any) => {
     dispatch(setLoading(true));
 
-    const content = await api.get(
-      `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/get_conf_item_files/`,
-      {
-        params: {
-          Quote: quoteNum,
-          Gym: gymNum,
-          Item: itemID,
-          FileExtension: file,
-        },
-        withCredentials: true,
-      },
-    );
+    // const content = await api.get(
+    //   `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/get_conf_item_files/`,
+    //   {
+    //     params: {
+    //       Quote: quoteNum,
+    //       Gym: gymNum,
+    //       Item: itemID,
+    //       FileExtension: file,
+    //     },
+    //     withCredentials: true,
+    //   },
+    // );
 
-    console.log(content);
+    // console.log(content);
+
+    // const content = await api.get(`${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/${``}`);
 
     dispatch(setLoading(false));
 
@@ -133,19 +135,19 @@ export const processGyms =
 
 export const retrieveLineConf = (lineID: number) => async (dispatch: any) => {
   const response = await api.get(
-    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/get_config/${lineID}`,
+    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/${lineID}/get_config/`,
   );
 
-  console.log(response.data);
+  console.log(response.data.data);
 
-  dispatch(editingConfig(response.data));
+  dispatch(editingConfig(response.data.data));
 
-  return response.data;
+  return response.data.data;
 };
 
 export const retrieveLineCSI = (lineID: number) => async (dispatch: any) => {
   const response = await api.get(
-    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/get_csi/${lineID}`,
+    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/${lineID}/get_csi_file/`,
   );
   let newTab = window.open('/test', '_blank');
 
@@ -157,7 +159,7 @@ export const retrieveLineCSI = (lineID: number) => async (dispatch: any) => {
 
 export const retrieveLineSpec = (lineID: number) => async (dispatch: any) => {
   const response = await api.get(
-    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/get_spec/${lineID}`,
+    `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/${lineID}/get_spec_file/`,
   );
   let newTab = window.open('/test', '_blank');
 

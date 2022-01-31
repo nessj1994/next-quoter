@@ -21,6 +21,7 @@ import {
   getQuotesState,
   toggleAdminMode,
   getAdminEnabled,
+  searchQuotes,
 } from './headersSlice';
 // eslint-disable-next-line import/no-cycle
 import {
@@ -55,6 +56,7 @@ export {
   setEditing,
   getAdminEnabled,
   fetchQuotes,
+  searchQuotes,
   createNewQuote,
   updateHeader,
   updateQuote,

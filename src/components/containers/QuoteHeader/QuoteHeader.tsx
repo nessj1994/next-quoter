@@ -17,6 +17,11 @@ import {
 import { useAppSelector, useAppDispatch } from '../../../store/hooks/hooks';
 import { useSession } from 'next-auth/react';
 import router, { useRouter } from 'next/router';
+
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import html2canvas from 'html2canvas';
+
 // import './quote-header.scss';
 interface HeaderFormValues {
   quote_date: Date;
@@ -163,7 +168,7 @@ const QuoteInfoHeader = React.memo((props: any) => {
     let mounted = true;
 
     if (mounted && SelectedQuote?.quote_number) {
-      router.push(`/quotes/info/${SelectedQuote?.quote_id}`);
+      router.push(`/quotes/info/${SelectedQuote?.quote_number}`);
     }
 
     return () => {
@@ -176,6 +181,35 @@ const QuoteInfoHeader = React.memo((props: any) => {
     const updated = { ...SelectedQuote, ...data };
     return await dispatch(updateHeader(updated));
   };
+
+  const pdfFields = [
+    'quote_number',
+    'quote_date',
+    'expire_date',
+    'quote_user',
+    'cust_id',
+    'ship_date',
+    'ship_name',
+    'ship_addr1',
+    'ship_addr2',
+    'ship_city',
+    'ship_state',
+    'ship_zip',
+    'ship_country',
+    'ship_phone',
+    'ship_email',
+    'ship_via',
+    'ship_method',
+    'lock',
+    'bid_type',
+    'market',
+    'lead_type',
+    'bid_status',
+    'bid_date',
+    'po_number',
+    'lock_amount',
+    'migrated',
+  ];
 
   return (
     <div className="flex-shrink w-full p-3 rounded-md shadow-md bg-gradient-to-r to-gray-50 from-white">
@@ -221,7 +255,43 @@ const QuoteInfoHeader = React.memo((props: any) => {
                   type="submit"
                   onClick={(e) => {
                     e.preventDefault();
-                    print();
+                    var doc = new jsPDF();
+                    let printHeight = 30;
+                    doc.text(
+                      'This is a test quote. Not valid for real orders***',
+                      10,
+                      10,
+                    );
+                    doc.text(SelectedQuote?.quote_number, 10, 20);
+                    pdfFields.map((field, index) => {
+                      if (SelectedQuote[field] && field !== 'quote_number') {
+                        doc.text(
+                          `${field}: ${SelectedQuote[field]} `,
+                          10,
+                          printHeight,
+                        );
+
+                        printHeight += 10;
+                      }
+                    });
+                    // doc.text(20, 20, `Quote: ${SelectedQuote.quote_number}`);
+                    autoTable(doc, {
+                      html: '#line-table',
+                      startY: printHeight + 10,
+                    });
+
+                    // Output as Data URI
+                    doc.output('dataurlnewwindow');
+                    // test.output('dataurlnewwindow'); //to check pdf generate
+
+                    // var win = window.open();
+                    // self.focus();
+                    // win.document.open();
+                    // win.document.write(doc.autoPrint());
+
+                    // win.document.close();
+                    // win.print();
+                    // win.close();
                   }}
                 >
                   <span className="absolute w-0 h-0 transition-all duration-300 ease-out bg-white rounded-full group-hover:w-32 group-hover:h-32 opacity-10"></span>
@@ -242,7 +312,7 @@ const QuoteInfoHeader = React.memo((props: any) => {
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 auto-cols-auto gap-10">
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3 print:cols-1 auto-cols-auto">
               {/* card one  */}
               <div className="px-3 border border-indigo-400">
                 <h1 className="text-xl font-semibold">Quote Info</h1>
