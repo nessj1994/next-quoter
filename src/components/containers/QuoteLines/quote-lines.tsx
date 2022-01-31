@@ -61,7 +61,12 @@ const selectionHook = (hooks: Hooks<any>) => {
         updateMyData,
       }: SelectionCellProps) => {
         const updateEnabled = (e: any) => {
-          updateMyData({ original, index, id, value: e.target.checked });
+          updateMyData({
+            original,
+            index,
+            field: 'enabled',
+            value: e.target.checked,
+          });
         };
         return (
           <input
@@ -174,11 +179,11 @@ const QuoteInfoLines = (props: any) => {
 
     console.log('Launching driveworks with user: ', session.user.username);
     if (gymIndex.selectedIndex.valueOf() === 0) {
-      window.location.href = `https://driveworks.litaniasports.com/Integration?User=${loginID}&Run=Gym&PorterJobNo=${
+      window.location.href = `https://driveworks.litaniasports.com/Integration?User=${custID}&Run=Gym&PorterJobNo=${
         props.quote?.quote_number
       }&GymNo=${props.quote?.gyms + 1}`;
     } else {
-      window.location.href = `https://driveworks.litaniasports.com/Integration?User=${loginID}&Run=Gym&Transition=edit&Specification=${
+      window.location.href = `https://driveworks.litaniasports.com/Integration?User=${custID}&Run=Gym&Transition=edit&Specification=${
         props.quote?.quote_number
       }-Gym${gymIndex.selectedIndex.valueOf()}`;
     }
@@ -228,7 +233,15 @@ const QuoteInfoLines = (props: any) => {
               accessor: (row: QuoteLine) => {
                 return `${Math.ceil(row.weight)} Lbs`;
               },
-              hideFooter: false,
+              Cell: ({ row }: CellProps<QuoteLine>): JSX.Element => {
+                return (
+                  <span
+                    className={`${!row.original.enabled ? 'line-through' : ''}`}
+                  >
+                    {row.values['Weight']}
+                  </span>
+                );
+              },
               Footer: (info: any) => {
                 const total = info.rows.reduce((sum: number, row: any) => {
                   // console.log(row);
@@ -241,6 +254,7 @@ const QuoteInfoLines = (props: any) => {
                 }, 0);
                 return <span>{total.toFixed(2)} LBS</span>;
               },
+              hideFooter: false,
               maxWidth: 90,
               disableGroupBy: true,
               disableFilters: true,
@@ -320,6 +334,7 @@ const QuoteInfoLines = (props: any) => {
                   // console.log(row);
                   return (
                     parseFloat(row.values['Line Total']) *
+                      Number(row.original.enabled) *
                       header.quote_multiplier +
                     sum
                   );
@@ -329,14 +344,18 @@ const QuoteInfoLines = (props: any) => {
                   // console.log(row);
                   return (
                     parseFloat(row.values['Unit Cost']) *
+                      Number(row.original.enabled) *
                       row.original.quantity +
                     sum
                   );
                 }, 0);
                 const totalProfit = totalPrice - totalCost;
 
-                const totalMargin = totalProfit / totalPrice;
-                return <span>{totalMargin.toFixed(2)}</span>;
+                let totalMargin = totalProfit / totalPrice;
+                if (!totalMargin) {
+                  totalMargin = 0;
+                }
+                return <span>% {Number(totalMargin * 100).toFixed(2)}</span>;
               },
               hideHeader: !adminSetting,
               hideFooter: !adminSetting,
@@ -350,15 +369,18 @@ const QuoteInfoLines = (props: any) => {
                 if (row.configured) {
                   return Number(row.unit_price!).toFixed(2);
                 }
-                return Number(
-                  row.unit_price! *
-                    row.line_multiplier *
-                    props.quoteMultiplier *
-                    Number(row.enabled),
-                ).toFixed(2);
+                return Number(row.unit_price! * props.quoteMultiplier).toFixed(
+                  2,
+                );
               },
-              Cell: (props: CellProps<QuoteLine>): JSX.Element => {
-                return <span>$ {props.row.values['Price']}</span>;
+              Cell: ({ row }: CellProps<QuoteLine>): JSX.Element => {
+                return (
+                  <span
+                    className={`${!row.original.enabled ? 'line-through' : ''}`}
+                  >
+                    $ {row.values['Price']}
+                  </span>
+                );
               },
               width: 90,
               minWidth: 90,
@@ -373,15 +395,25 @@ const QuoteInfoLines = (props: any) => {
             {
               Header: 'Line Total',
               accessor: (row: QuoteLine) => {
-                return Number(row.line_total * Number(row.enabled)).toFixed(2);
+                return Number(row.line_total).toFixed(2);
               },
-              Cell: (props: CellProps<QuoteLine>): JSX.Element => {
-                return <span>$ {props.row.values['Line Total']}</span>;
+              Cell: ({ row }: CellProps<QuoteLine>): JSX.Element => {
+                return (
+                  <span
+                    className={`${!row.original.enabled ? 'line-through' : ''}`}
+                  >
+                    $ {row.values['Line Total']}
+                  </span>
+                );
               },
               Footer: (info: any) => {
                 const total = info.rows.reduce((sum: number, row: any) => {
                   // console.log(row);
-                  return parseFloat(row.values['Line Total']) + sum;
+                  return (
+                    parseFloat(
+                      row.values['Line Total'] * row.original.enabled,
+                    ) + sum
+                  );
                 }, 0);
                 return <span>${total.toFixed(2)}</span>;
               },
@@ -514,6 +546,7 @@ const QuoteInfoLines = (props: any) => {
           name="quote-line-table"
           columns={columns}
           data={data}
+          adminSetting={adminSetting}
           updateMyData={(updatedInfo) => {
             const { original, index, field, value } = updatedInfo;
             const temp = { ...original };
