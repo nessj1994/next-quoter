@@ -14,6 +14,7 @@ import {
   selectComponents,
   addComponent,
   LineComponent,
+  editing,
 } from '../../../store';
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
@@ -23,6 +24,7 @@ const PageLineComponents: NextPage = (pageProps) => {
   // const auth = useAuth();
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const SelectedQuote = useAppSelector((state) => editing(state));
 
   const { lineID } = router.query;
   const components = useAppSelector(selectComponents);
@@ -42,33 +44,45 @@ const PageLineComponents: NextPage = (pageProps) => {
   // console.log(auth.state.adminEnabled);
   return (
     <>
-      <div className="col rows-3">
-        <div className="mb-3 row backdrop sticky-top row-cols-2">
-          <div className="col col-rows-2">
+      <div className="m-3 flex flex-col gap-3">
+        <div className="col col-rows-2">
+          <div className="row">
             <div className="row">
-              <h4>
-                <nav className="nav " aria-label="breadcrumb">
-                  <ol className="breadcrumb">
-                    <li className="breadcrumb-item">
-                      <Link href="#">Quote</Link>
-                    </li>
-                    <li className="breadcrumb-item active" aria-current="page">
-                      {lineID}
-                    </li>
-                  </ol>
-                </nav>
-              </h4>
+              <strong className="text-2xl text-porter mb-3">Components</strong>
             </div>
-            <div className="row">
-              <h4>Components</h4>
-            </div>
+            <nav
+              className="bg-grey-light rounded-md w-full "
+              aria-label="breadcrumb"
+            >
+              <ol className="list-reset flex">
+                <li className="breadcrumb-item font-bold border rounded-full px-2 hover:border-porter">
+                  <Link
+                    href={`../../quotes/info/${SelectedQuote?.quote_number}`}
+                    passHref
+                  >
+                    <a className="text-blue-600 hover:text-blue-700">
+                      {SelectedQuote?.quote_number ?? ''}
+                    </a>
+                  </Link>
+                </li>
+                <li>
+                  <span className="text-gray-500 mx-2">/</span>
+                </li>
+                <li
+                  className="breadcrumb-item active border rounded-full px-2"
+                  aria-current="page"
+                >
+                  {lineID}
+                </li>
+              </ol>
+            </nav>
           </div>
+        </div>
 
-          <div className="col ">
-            {/* {auth.state.isAdmin && auth.state.adminEnabled && ( */}
-            <ComponentTableToolbar lineID={lineID} />
-            {/* )} */}
-          </div>
+        <div className="border border-porter">
+          {/* {auth.state.isAdmin && auth.state.adminEnabled && ( */}
+          <ComponentTableToolbar lineID={lineID} />
+          {/* )} */}
         </div>
 
         <div className="row">

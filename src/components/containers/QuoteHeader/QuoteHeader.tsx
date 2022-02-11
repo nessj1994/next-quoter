@@ -198,17 +198,7 @@ const QuoteInfoHeader = React.memo((props: any) => {
     'ship_country',
     'ship_phone',
     'ship_email',
-    'ship_via',
-    'ship_method',
-    'lock',
     'bid_type',
-    'market',
-    'lead_type',
-    'bid_status',
-    'bid_date',
-    'po_number',
-    'lock_amount',
-    'migrated',
   ];
 
   return (
@@ -257,27 +247,46 @@ const QuoteInfoHeader = React.memo((props: any) => {
                     e.preventDefault();
                     var doc = new jsPDF();
                     let printHeight = 30;
-                    doc.text(
-                      'This is a test quote. Not valid for real orders***',
-                      10,
-                      10,
-                    );
-                    doc.text(SelectedQuote?.quote_number, 10, 20);
+                    doc.text('Porter Custom Quoter', 10, 10);
+                    doc.text(`Quote: ${SelectedQuote?.quote_number}`, 10, 20);
+                    doc.line(10, 22, 200, 22);
+
                     pdfFields.map((field, index) => {
                       if (SelectedQuote[field] && field !== 'quote_number') {
-                        doc.text(
-                          `${field}: ${SelectedQuote[field]} `,
-                          10,
-                          printHeight,
-                        );
+                        // split field key into printable capitalized words
+                        let key = field.replace(/_/g, ' ');
+
+                        let words = key.split(' ');
+
+                        for (let i = 0; i < words.length; i++) {
+                          words[i] =
+                            words[i].charAt(0).toUpperCase() +
+                            words[i].slice(1);
+                        }
+
+                        key = words.join(' ');
+
+                        let value = SelectedQuote[field];
+                        if (field.includes('date')) {
+                          value = value.split('T')[0];
+                        }
+
+                        console.log('Words: ', words, 'Field: ', field);
+
+                        doc.text(`${key}: ${value} `, 10, printHeight);
 
                         printHeight += 10;
                       }
                     });
+                    doc.line(10, printHeight + 2, 200, printHeight + 2);
+
                     // doc.text(20, 20, `Quote: ${SelectedQuote.quote_number}`);
                     autoTable(doc, {
                       html: '#line-table',
                       startY: printHeight + 10,
+                      bodyStyles: {
+                        cellWidth: 'auto',
+                      },
                     });
 
                     // Output as Data URI

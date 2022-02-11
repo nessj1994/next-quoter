@@ -415,7 +415,46 @@ const QuoteInfoLines = (props: any) => {
                     ) + sum
                   );
                 }, 0);
-                return <span>${total.toFixed(2)}</span>;
+                let quote_date = new Date(header.quote_date);
+                let ship_date = new Date(header.ship_date);
+                let escAfter = new Date(
+                  quote_date.setMonth(quote_date.getMonth() + 1),
+                );
+                let escValue = 0;
+                let escPercent = 0;
+                let summedVal = total;
+
+                console.log('Init ESC Date to: ', escAfter);
+                escAfter.setMonth(escAfter.getMonth() + 2);
+                console.log('Updated ESC Date to: ', escAfter);
+                console.log(ship_date.getMonth());
+                if (escAfter < ship_date) {
+                  console.log('Should Escalate');
+                  // let monthsPastEsc = 1;
+                  // while (monthsPastEsc + 1 < ship_date.getMonth()) {
+                  //   monthsPastEsc++;
+                  // }
+                  var months;
+                  months =
+                    (ship_date.getFullYear() - escAfter.getFullYear()) * 12;
+                  months -= escAfter.getMonth();
+                  months += ship_date.getMonth();
+                  months = months <= 0 ? 0 : months;
+
+                  escPercent = 1.5 * months;
+                  escValue = (total * escPercent) / 100;
+                  summedVal += escValue;
+                }
+
+                return (
+                  <>
+                    <div className="flex items-start flex-col">
+                      <span>Subtotal: ${total.toFixed(2)}</span>
+                      <span>Escalation: ${escValue.toFixed(2)}</span>
+                      <span>Total: $ {summedVal.toFixed(2)}</span>
+                    </div>
+                  </>
+                );
               },
               width: 164,
               minWidth: 128,
