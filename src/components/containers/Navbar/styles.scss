@@ -1,22 +1,38 @@
-// .list-group {
-//   & > .list-header {
-//     background-color: map-get($theme-colors, primary);
-//   }
-// }
-
-// .list-header {
-//   & > div > h4 {
-//     color: white;
-//   }
-// }
-
-// .offcanvas {
-//   max-width: 350px;
-//   width: 15%;
-//   min-width: 85px;
-//   visibility: visible;
-// }
+.sticky-nav {
+  @apply sticky top-0 z-10;
+}
 
 .nav-item {
-  @apply block px-4 py-2 mt-2 text-sm font-semibold  text-porter duration-300 rounded-lg border border-porter-light hover:bg-porter hover:text-white;
+}
+
+.menu-btn-container {
+  @apply flex h-full w-24 rounded-full bg-white justify-center;
+}
+
+.logo-container {
+  @apply flex h-full w-full  flex-1 flex-row gap-[2px];
+
+  .logo-main {
+    @apply relative w-6 h-16;
+  }
+
+  .logo-expanded {
+    @apply relative h-[56px] w-28 transition-all duration-500 ease-linear;
+  }
+
+  .expanded {
+    @apply opacity-100;
+  }
+
+  .closed {
+    @apply opacity-0;
+  }
+}
+
+.nav-highlight {
+  @apply absolute left-0 ml-[-6px] block h-[0px] w-[8px] flex-1 transform-none rounded bg-porter transition-all duration-150 ease-linear group-hover:h-[32px];
+}
+
+.nav-highlight__accent {
+  @apply bg-porter-accent;
 }

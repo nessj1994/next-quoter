@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import moment from 'moment';
 import { Formik, Form, FormikErrors } from 'formik';
 import { InputField } from '../../modules/Form/InputField';
+import { CheckboxField } from '../../modules/Form/CheckboxField';
 import DateField from '../../modules/Form/DateField';
 import TextArea from '../../modules/Form/TextArea';
 import SelectField from '../../modules/Form/Select';
@@ -45,6 +46,7 @@ interface HeaderFormValues {
   bid_type: string;
   market: string;
   lead_type: string;
+  private: boolean;
   bid_status: string;
   bid_date: Date;
   po_number: string;
@@ -96,28 +98,16 @@ type RequireAtLeastOne<T> = {
 }[keyof T];
 
 const QuoteInfoHeader = React.memo((props: any) => {
+  let today = new Date();
+  let defaultExpiration = new Date();
+  defaultExpiration.setDate(today.getDate() + 60);
+
   const dispatch = useAppDispatch();
   const quotesState = useAppSelector((state) => getQuotesState(state));
-  const SelectedQuote = useAppSelector((state) => editing(state));
+  // const SelectedQuote = useAppSelector((state) => editing(state));
+  const SelectedQuote = props.quote;
   const auth = useSession();
   const router = useRouter();
-
-  const initExpireDate = (data: any) => {
-    let quoteDate;
-    let expires = new Date();
-
-    const validLength = data ? data.valid_length : 60;
-    console.log('Valid Length: ', validLength);
-
-    if (data?.quote_date) {
-      quoteDate = new Date(data.quote_date);
-      expires.setDate(quoteDate.getDate() + validLength);
-    } else {
-      expires.setDate(expires.getDate() + 60);
-    }
-
-    return expires;
-  };
 
   const initForm = () => {
     let formData: Partial<HeaderFormValues> = {
@@ -130,9 +120,8 @@ const QuoteInfoHeader = React.memo((props: any) => {
       market: Markets[0],
       lead_type: LeadTypes[0],
       bid_status: ProjectStatus[0],
-
-      quote_date: new Date(),
-      expire_date: initExpireDate(SelectedQuote),
+      quote_date: today,
+      expire_date: SelectedQuote?.expire_date ?? defaultExpiration,
     };
 
     if (SelectedQuote) {
@@ -168,13 +157,13 @@ const QuoteInfoHeader = React.memo((props: any) => {
     let mounted = true;
 
     if (mounted && SelectedQuote?.quote_number) {
-      router.push(`/quotes/info/${SelectedQuote?.quote_number}`);
+      router.push(`/quotes/info/${SelectedQuote?.quote_number ?? ''}`);
     }
 
     return () => {
       mounted = false;
     };
-  }, [SelectedQuote?.quote_number]);
+  }, [SelectedQuote]);
 
   const handleSave = async (data: RequireAtLeastOne<QuoteHeader>) => {
     // dispatch here
@@ -202,7 +191,7 @@ const QuoteInfoHeader = React.memo((props: any) => {
   ];
 
   return (
-    <div className="flex-shrink w-full p-3 rounded-md shadow-md bg-gradient-to-r to-gray-50 from-white">
+    <>
       <Formik
         enableReinitialize
         initialValues={initialValues}
@@ -230,18 +219,40 @@ const QuoteInfoHeader = React.memo((props: any) => {
         }}
       >
         {({ errors, isSubmitting, handleSubmit, values, handleChange }) => (
-          <Form className="flex flex-col flex-1 w-full " id="header-form">
+          <Form
+            className="flex flex-col w-full px-3 py-3 bg-white border rounded-md "
+            id="header-form"
+          >
             {/* header */}
-            <div className="flex flex-row justify-between flex-1 w-full gap-3 align-items-center">
-              <h1 className="p-3 text-3xl font-bold capitalize bg-transparent before:absolute empty:before before:shadow-lg before:bg-blue-300 text-porter ">
-                {quotesState.loading
-                  ? 'loading'
-                  : SelectedQuote?.quote_number ?? 'New Quote'}
-              </h1>
-              <div className="flex flex-row print:hidden">
+            <div className="flex justify-between w-full gap-3 align-items-center">
+              <span className="bg-white border rounded-full shadow border-1">
+                <h1 className="px-3 text-3xl font-bold capitalize bg-transparent before:shadow-lg text-porter">
+                  {quotesState.loading
+                    ? 'loading'
+                    : SelectedQuote?.quote_number ?? 'New Quote'}
+                </h1>
+              </span>
+              {new Date(SelectedQuote?.expire_date).getTime() <
+                today.getTime() && (
+                <div className="h-full text-2xl font-bold text-red-500">
+                  This Quote is Expired
+                </div>
+              )}
+              <div className="flex flex-row gap-3 print:hidden">
+                {new Date(SelectedQuote?.expire_date).getTime() <
+                  today.getTime() && (
+                  <button
+                    disabled
+                    title="Coming Soon"
+                    className="relative items-center justify-center px-3 py-1 my-auto text-white bg-red-500 rounded-md disabled:bg-gray-300 infline-flex"
+                    type="submit"
+                  >
+                    Reprice
+                  </button>
+                )}
                 <button
                   disabled={isSubmitting}
-                  className="relative inline-flex items-center justify-center px-3 py-1 m-3 text-white rounded shadow-lg cursor-pointer group bg-gradient-to-r from-porter to-porter-light"
+                  className="relative inline-flex items-center justify-center px-3 py-1 my-auto text-white rounded shadow-lg cursor-pointer group bg-gradient-to-r from-porter to-porter-light"
                   type="submit"
                   onClick={(e) => {
                     e.preventDefault();
@@ -291,16 +302,6 @@ const QuoteInfoHeader = React.memo((props: any) => {
 
                     // Output as Data URI
                     doc.output('dataurlnewwindow');
-                    // test.output('dataurlnewwindow'); //to check pdf generate
-
-                    // var win = window.open();
-                    // self.focus();
-                    // win.document.open();
-                    // win.document.write(doc.autoPrint());
-
-                    // win.document.close();
-                    // win.print();
-                    // win.close();
                   }}
                 >
                   <span className="absolute w-0 h-0 transition-all duration-300 ease-out bg-white rounded-full group-hover:w-32 group-hover:h-32 opacity-10"></span>
@@ -309,7 +310,7 @@ const QuoteInfoHeader = React.memo((props: any) => {
                 </button>
                 <button
                   disabled={isSubmitting}
-                  className="relative inline-flex items-center justify-center px-3 py-1 m-3 text-white rounded shadow-lg cursor-pointer group bg-gradient-to-r from-porter to-porter-light"
+                  className="relative inline-flex items-center justify-center px-3 py-1 my-auto text-white rounded shadow-lg cursor-pointer group bg-gradient-to-r from-porter to-porter-light"
                   type="submit"
                   onClick={(e) => {
                     e.preventDefault();
@@ -321,188 +322,232 @@ const QuoteInfoHeader = React.memo((props: any) => {
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-10 md:grid-cols-3 print:cols-1 auto-cols-auto">
+
+            <div className="grid grid-cols-1 gap-10 mt-3 md:grid-cols-3 print:cols-1 auto-cols-auto">
               {/* card one  */}
-              <div className="px-3 border border-indigo-400">
-                <h1 className="text-xl font-semibold">Quote Info</h1>
-                {auth.data?.user?.is_staff && (
+              <div className="border rounded-md shadow">
+                <h1 className="w-full py-1 pl-3 text-xl font-semibold text-white bg-porter rounded-t-md">
+                  Quote Info
+                </h1>
+                <div className="mx-3 mb-3">
+                  {auth.data?.user?.is_staff && (
+                    <div className="flex items-center gap-3">
+                      <div className="">
+                        <label htmlFor="private">Private</label>
+                        <CheckboxField className="ml-2" name="private" />
+                      </div>
+                      <div className="">
+                        <label htmlFor="lock">Locked</label>
+                        <CheckboxField className="ml-2" name="lock" />
+                      </div>
+                      <div className="flex-1">
+                        <label htmlFor="lock_amount">Lock Amount</label>
+                        <InputField
+                          name="lock_amount"
+                          type="number"
+                          step={10000}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="">
-                    <label htmlFor="LockAmount">Lock Amount</label>
-                    <InputField name="LockAmount" type="number" step={10000} />
+                    <label htmlFor="cust_id">Dealer</label>
+                    <InputField
+                      name="cust_id"
+                      type="text"
+                      disabled={!auth.data?.user?.is_staff}
+                      placeholder="000000"
+                      required
+                    />
                   </div>
-                )}
-                <div className="">
-                  <label htmlFor="cust_id">Dealer</label>
-                  <InputField
-                    name="cust_id"
-                    type="text"
-                    disabled={!auth.data?.user?.is_staff}
-                    placeholder="000000"
-                    required
-                  />
-                </div>
-                <div className="">
-                  <label htmlFor="po_number">PO Num</label>
-                  <InputField name="po_number" placeholder="0" />
-                </div>
-                <div className="">
-                  <label htmlFor="quote_date">Quoted On</label>
-                  <DateField name="quote_date" required />
-                </div>
-                <div className="">
-                  <label htmlFor="expire_date">Expires</label>
-                  <DateField
-                    name="expire_date"
-                    placeholder="stuff"
-                    disabled={!auth.data?.user?.is_staff}
-                    readOnly={!auth.data?.user?.is_staff}
-                    required
-                  />
+                  <div className="">
+                    <label htmlFor="dealer_rep">Sales Rep</label>
+                    <InputField
+                      name="dealer_rep"
+                      type="text"
+                      disabled={!auth.data?.user?.is_staff}
+                      placeholder=""
+                      required
+                    />
+                  </div>
+                  <div className="">
+                    <label htmlFor="po_number">PO Num</label>
+                    <InputField name="po_number" placeholder="0" />
+                  </div>
+                  <div className="flex flex-row gap-2">
+                    <div className="flex-1">
+                      <label htmlFor="quote_date">Quoted</label>
+                      <DateField name="quote_date" required />
+                    </div>
+                    <div className="flex-1">
+                      <label htmlFor="expire_date">Expires</label>
+                      <DateField
+                        name="expire_date"
+                        placeholder="stuff"
+                        disabled={!auth.data?.user?.is_staff}
+                        readOnly={!auth.data?.user?.is_staff}
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
               {/* card two  */}
-              <div className="px-3 border border-indigo-400">
-                <h1 className="text-xl font-semibold">Shipping Info</h1>
-                <div className="">
-                  <label htmlFor="shippingCust">Customer</label>
-                  <InputField name="shipping_cust" type="text" maxLength={6} />
-                </div>
-                <div className="row w-75">
-                  <label htmlFor="ShipName print:text-purple-500">Name</label>
-                  <InputField
-                    name="ship_name"
-                    type="text"
-                    placeholder=""
-                    required
-                  />
-                </div>
-                <div className="row w-75">
-                  <label htmlFor="ShipEmail">Email</label>
-                  <InputField
-                    name="ship_email"
-                    type="email"
-                    size={20}
-                    placeholder="example@litaniasports.com"
-                  />
-                </div>
-                <div className="">
-                  <label htmlFor="ship_addr1">Address 1</label>
-                  <InputField as="input" name="ship_addr1" type="text" />
-                </div>
-                <div className="">
-                  <label htmlFor="ship_addr2">Address 2</label>
-                  <InputField as="input" name="ship_addr2" type="text" />
-                </div>
-                <div className="">
-                  <label htmlFor="ship_city">City</label>
-                  <InputField as="input" name="ship_city" type="text" />
-                </div>
-                <div className="flex flex-1 gap-2 row">
-                  <div className="col-8 col-md-4 col-lg-3">
-                    <label htmlFor="ship_state">State</label>
+              <div className="border rounded-md shadow ">
+                <h1 className="w-full py-1 pl-3 text-xl font-semibold text-white bg-porter rounded-t-md">
+                  Shipping Info
+                </h1>
+                <div className="mx-3 mb-3">
+                  <div className="row w-75">
+                    <label htmlFor="ShipName print:text-purple-500">Name</label>
                     <InputField
-                      as="input"
-                      maxLength={2}
-                      size={3}
-                      name="ship_state"
+                      name="ship_name"
                       type="text"
+                      placeholder=""
+                      required
                     />
                   </div>
-                  <div className="col-8 col-md-4 col-lg-3">
-                    <label htmlFor="ship_zip">ZIP</label>
+                  <div className="row w-75">
+                    <label htmlFor="ShipEmail">Email</label>
                     <InputField
-                      as="input"
-                      size={10}
-                      maxLength={5}
-                      name="ship_zip"
-                      type="text"
+                      name="ship_email"
+                      type="email"
+                      size={20}
+                      placeholder="example@litaniasports.com"
                     />
                   </div>
-                </div>
+                  <div className="">
+                    <label htmlFor="ship_addr1">Address 1</label>
+                    <InputField as="input" name="ship_addr1" type="text" />
+                  </div>
+                  <div className="">
+                    <label htmlFor="ship_addr2">Address 2</label>
+                    <InputField as="input" name="ship_addr2" type="text" />
+                  </div>
+                  <div className="flex flex-1 gap-2 row">
+                    <div className="">
+                      <label htmlFor="ship_city">City</label>
+                      <InputField as="input" name="ship_city" type="text" />
+                    </div>
+                    <div className="col-8 col-md-4 col-lg-3">
+                      <label htmlFor="ship_state">State</label>
+                      <InputField
+                        as="input"
+                        maxLength={2}
+                        size={3}
+                        name="ship_state"
+                        type="text"
+                      />
+                    </div>
+                    <div className="col-8 col-md-4 col-lg-3">
+                      <label htmlFor="ship_zip">ZIP</label>
+                      <InputField
+                        as="input"
+                        size={10}
+                        maxLength={5}
+                        name="ship_zip"
+                        type="text"
+                      />
+                    </div>
+                  </div>
 
-                <div>
-                  <label htmlFor="ship_date">Ship Date</label>
-                  <DateField name="ship_date" required />
+                  <div>
+                    <label htmlFor="ship_date">Ship Date</label>
+                    <DateField name="ship_date" required />
+                  </div>
                 </div>
               </div>
               {/* card  three */}
-              <div className="px-3 border border-indigo-400">
-                <h1 className="text-xl font-semibold">Status</h1>
-
-                <div className="flex-1">
-                  <label htmlFor="comments">Comments</label>
-                  <TextArea name="comments" as="textarea" type="text" />
-                </div>
-                {auth.data?.user?.is_staff && (
+              <div className="border rounded-md shadow ">
+                <h1 className="w-full py-1 pl-3 text-xl font-semibold text-white bg-porter rounded-t-md">
+                  Status
+                </h1>
+                <div className="mx-3 mb-3">
                   <div className="flex-1">
-                    <label htmlFor="private_comments">Hidden Comments</label>
-                    <TextArea
-                      name="private_comments"
-                      as="textarea"
-                      type="text"
-                    />
+                    <label htmlFor="comments">Comments</label>
+                    <TextArea name="comments" as="textarea" type="text" />
                   </div>
-                )}
-                <div className="">
-                  <label htmlFor="bid_date">Bid Date</label>
-                  <DateField name="bid_date" required />
-                </div>
-                <div className="">
-                  <label htmlFor="bid_type">Bid Type</label>
-                  <SelectField as="select" name="bid_type" type="text">
-                    {BidTypes.map((val, index) => {
-                      return (
-                        <option key={index} value={val}>
-                          {val}
-                        </option>
-                      );
-                    })}
-                  </SelectField>
-                </div>
-                <div className="">
-                  <label htmlFor="market">Market</label>
-                  <SelectField name="market" defaultValue={0}>
-                    {Markets.map((val, index) => {
-                      return (
-                        <option key={index} value={val}>
-                          {val}
-                        </option>
-                      );
-                    })}
-                  </SelectField>
-                </div>
-                <div className="">
-                  <label htmlFor="lead_type">Lead Type</label>
-                  <SelectField as="input" name="lead_type" type="text" required>
-                    {LeadTypes.map((val, index) => {
-                      return (
-                        <option key={index} value={val}>
-                          {val}
-                        </option>
-                      );
-                    })}
-                  </SelectField>
-                </div>
-                <div className="">
-                  <label htmlFor="bid_status">Project Status</label>
-                  <SelectField
-                    as="input"
-                    name="bid_status"
-                    type="text"
-                    required
-                  >
-                    {ProjectStatus.map((val, index) => {
-                      return (
-                        <option key={index} value={val}>
-                          {val}
-                        </option>
-                      );
-                    })}
-                  </SelectField>
-                </div>
-                <div className="">
-                  <label htmlFor="status_notes">Status Notes</label>
-                  <InputField as="input" name="status_notes" type="text" />
+                  {auth.data?.user?.is_staff && (
+                    <div className="flex-1">
+                      <label htmlFor="private_comments">Hidden Comments</label>
+                      <TextArea
+                        name="private_comments"
+                        as="textarea"
+                        type="text"
+                      />
+                    </div>
+                  )}
+                  <div className="">
+                    <label htmlFor="bid_date">Bid Date</label>
+                    <DateField name="bid_date" required />
+                  </div>
+                  <div className="flex flex-row gap-2">
+                    <div className="">
+                      <label htmlFor="bid_type">Bid Type</label>
+                      <SelectField as="select" name="bid_type" type="text">
+                        {BidTypes.map((val, index) => {
+                          return (
+                            <option key={index} value={val}>
+                              {val}
+                            </option>
+                          );
+                        })}
+                      </SelectField>
+                    </div>
+                    <div className="">
+                      <label htmlFor="lead_type">Lead Type</label>
+                      <SelectField
+                        as="input"
+                        name="lead_type"
+                        type="text"
+                        required
+                      >
+                        {LeadTypes.map((val, index) => {
+                          return (
+                            <option key={index} value={val}>
+                              {val}
+                            </option>
+                          );
+                        })}
+                      </SelectField>
+                    </div>
+                    <div className="">
+                      <label htmlFor="market">Market</label>
+                      <SelectField name="market" defaultValue={0}>
+                        {Markets.map((val, index) => {
+                          return (
+                            <option key={index} value={val}>
+                              {val}
+                            </option>
+                          );
+                        })}
+                      </SelectField>
+                    </div>
+                  </div>
+                  <div className="flex flex-row gap-2">
+                    <div className="">
+                      <label htmlFor="bid_status">Project Status</label>
+                      <SelectField
+                        as="input"
+                        name="bid_status"
+                        type="text"
+                        required
+                      >
+                        {ProjectStatus.map((val, index) => {
+                          return (
+                            <option key={index} value={val}>
+                              {val}
+                            </option>
+                          );
+                        })}
+                      </SelectField>
+                    </div>
+                    <div className="">
+                      <label htmlFor="status_notes">Status Notes</label>
+                      <InputField as="input" name="status_notes" type="text" />
+                    </div>
+                  </div>
                 </div>
                 {/* <label htmlFor="ChangeStatus">Change Status</label>
                     <SelectField as="select" name="ChangeStatus">
@@ -514,7 +559,7 @@ const QuoteInfoHeader = React.memo((props: any) => {
           </Form>
         )}
       </Formik>
-    </div>
+    </>
   );
 });
 QuoteInfoHeader.displayName = 'QuoteInfoHeader';

@@ -64,6 +64,12 @@ module.exports = {
         center: true,
         padding: '1rem',
       },
+      spacing: {
+        14: '3.5rem',
+        18: '4.5rem',
+        68: '16rem',
+        92: '23rem',
+      },
     },
   },
   variants: {

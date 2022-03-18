@@ -1,3 +1,4 @@
+import { ArrowDownIcon, ArrowRightIcon } from '@heroicons/react/solid';
 import React, {
   PropsWithChildren,
   ReactElement,

@@ -69,7 +69,7 @@ export type QuoteHeader = {
   quote_user: string;
   quote_date: Date;
   auto_length: boolean;
-  valid_length: number;
+  expire_date: Date;
   default_pricing?: number;
   multipliers_id: number;
   public_bid: boolean;
@@ -151,7 +151,7 @@ export type QuoteHeaderState = {
   loading: boolean;
   adminEnabled: boolean;
   fetchFilters: Partial<Filters>;
-  currentQuote: QuoteHeader | Partial<QuoteHeader>;
+  currentQuote: QuoteHeader | Partial<QuoteHeader> | null;
 };
 export type QuoteLine = {
   line_id: number;
@@ -166,7 +166,7 @@ export type QuoteLine = {
   order_cost?: number;
   manual_price?: number;
   school_price?: any;
-  default_price?: any;
+  base_price?: any;
   unit_price?: number;
   itpb_exempt: boolean;
   pricing_mode?: any;

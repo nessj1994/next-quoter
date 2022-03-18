@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { CellProps } from 'react-table';
-
+import { debounce } from 'utils';
 type IEditableCellProps = {
   updateMyData: (props: any) => void;
 };
@@ -16,15 +16,15 @@ function EditableCell(props: EditableCellProps) {
     updateMyData,
   } = props;
   const [value, setValue] = React.useState(initialValue);
-  const onChange = (e: any) => {
+  const onChange = debounce((e: any) => {
     setValue(e.target.value);
     updateMyData({ original, index, field: id, value: e.target.value });
-  };
+  }, 300);
 
   // We'll only update the external data when the input is blurred
   const onBlur = (e: any) => {
     setValue(e.target.value);
-    updateMyData({ original, index, field: id, value: e.target.value });
+    // updateMyData({ original, index, field: id, value: e.target.value });
   };
   // If the initialValue is changed external, sync it up with our state
   React.useEffect(() => {
@@ -42,7 +42,7 @@ function EditableCell(props: EditableCellProps) {
               ? true
               : false
           }
-          value={value}
+          defaultValue={value}
           onChange={onChange}
           onBlur={onBlur}
           style={{ width }}

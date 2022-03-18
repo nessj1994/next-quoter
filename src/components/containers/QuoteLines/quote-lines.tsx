@@ -29,6 +29,7 @@ import {
   updateLine,
   quoteHeaderSelectors,
   editing,
+  QuoteHeader,
 } from '../../../store';
 import { useSession } from 'next-auth/react';
 
@@ -117,30 +118,27 @@ const deletionHook = (hooks: Hooks<any>) => {
 };
 
 const QuoteInfoLines = (props: any) => {
+  const initExpired = (header: Partial<QuoteHeader>) => {
+    let value = header.expire_date
+      ? new Date(header.expire_date).getTime() < new Date().getTime()
+      : false;
+
+    console.log('Expired: ', value);
+    return value;
+  };
+
   const lines = useAppSelector((state) => quoteLinesSelectors.selectAll(state));
   const header = useAppSelector(editing);
   const dispatch = useAppDispatch();
   const { data: session } = useSession();
+  const [headerExpired, setHeaderExpired] = useState(initExpired(header));
 
   const { adminSetting, updateQuoteMultiplier } = props;
-
   const [adminEnabled, setAdminEnabled] = useState(adminSetting);
 
   const [showDrop, toggleDrop] = useState(false);
 
   const [gymSelectOptions, setGymSelectOptions] = useState(['Add New Gym']);
-
-  // useEffect(() => {
-  //   let mounted = true;
-
-  //   if (mounted && header) {
-  //     dispatch(fetchLines(header.QuoteID));
-  //   }
-
-  //   return () => {
-  //     mounted = false;
-  //   };
-  // }, [dispatch]);
 
   useEffect(() => {
     let mounted = true;
@@ -160,7 +158,9 @@ const QuoteInfoLines = (props: any) => {
     if (mounted && header) {
       let addedOptions = [];
 
-      for (let i = 1; i <= header.gyms; i++) {
+      setHeaderExpired(initExpired(header));
+
+      for (let i = 1; i <= header?.gyms; i++) {
         addedOptions.push(`Edit Gym ${i}`);
       }
       setGymSelectOptions([...gymSelectOptions, ...addedOptions]);
@@ -178,14 +178,17 @@ const QuoteInfoLines = (props: any) => {
     const loginID = custID === '800221' ? username : custID;
 
     console.log('Launching driveworks with user: ', session.user.username);
-    if (gymIndex.selectedIndex.valueOf() === 0) {
-      window.location.href = `https://driveworks.litaniasports.com/Integration?User=${custID}&Run=Gym&PorterJobNo=${
-        props.quote?.quote_number
-      }&GymNo=${props.quote?.gyms + 1}`;
-    } else {
-      window.location.href = `https://driveworks.litaniasports.com/Integration?User=${custID}&Run=Gym&Transition=edit&Specification=${
-        props.quote?.quote_number
-      }-Gym${gymIndex.selectedIndex.valueOf()}`;
+    // ! Check if selected quote has quotenumber first then launch. Should be the save for adding lines. Otherwise throw error.
+    if (header?.quote_number) {
+      if (gymIndex.selectedIndex.valueOf() === 0) {
+        window.location.href = `https://driveworks.litaniasports.com/Integration?User=${custID}&Run=Gym&PorterJobNo=${
+          props.quote?.quote_number
+        }&GymNo=${props.quote?.gyms + 1}`;
+      } else {
+        window.location.href = `https://driveworks.litaniasports.com/Integration?User=${custID}&Run=Gym&Transition=edit&Specification=${
+          props.quote?.quote_number
+        }-Gym${gymIndex.selectedIndex.valueOf()}`;
+      }
     }
   };
 
@@ -293,7 +296,10 @@ const QuoteInfoLines = (props: any) => {
               Footer: (info: any) => {
                 const total = info.rows.reduce((sum: number, row: any) => {
                   return (
-                    row.original.item_cost * Number(row.original.enabled) + sum
+                    row.original.item_cost *
+                      row.original.quantity *
+                      Number(row.original.enabled) +
+                    sum
                   );
                 }, 0);
                 return <span>${total.toFixed(2)}</span>;
@@ -314,8 +320,9 @@ const QuoteInfoLines = (props: any) => {
               Cell: PricingCell,
               hideHeader: !adminSetting,
               hideFooter: !adminSetting,
-              maxWidth: 90,
-              width: 90,
+              maxWidth: 150,
+              width: 150,
+              minWidth: 150,
               disableGroupBy: true,
               disableFilters: true,
               printable: false,
@@ -333,7 +340,7 @@ const QuoteInfoLines = (props: any) => {
                 const totalPrice = info.rows.reduce((sum: number, row: any) => {
                   // console.log(row);
                   return (
-                    parseFloat(row.values['Line Total']) *
+                    parseFloat(row.original.line_total) *
                       Number(row.original.enabled) *
                       header.quote_multiplier +
                     sum
@@ -366,8 +373,15 @@ const QuoteInfoLines = (props: any) => {
             {
               Header: 'Price',
               accessor: (row: QuoteLine) => {
+                if (headerExpired) {
+                  return '';
+                }
+
                 if (row.configured) {
-                  return Number(row.unit_price!).toFixed(2);
+                  return Number(row.unit_price!).toLocaleString('en-us', {
+                    style: 'currency',
+                    currency: 'usd',
+                  });
                 }
                 return Number(row.unit_price! * props.quoteMultiplier).toFixed(
                   2,
@@ -378,7 +392,7 @@ const QuoteInfoLines = (props: any) => {
                   <span
                     className={`${!row.original.enabled ? 'line-through' : ''}`}
                   >
-                    $ {row.values['Price']}
+                    {row.values['Price']}
                   </span>
                 );
               },
@@ -395,37 +409,64 @@ const QuoteInfoLines = (props: any) => {
             {
               Header: 'Line Total',
               accessor: (row: QuoteLine) => {
-                return Number(row.line_total).toFixed(2);
+                if (headerExpired) {
+                  return '';
+                }
+
+                return Number(row.line_total).toLocaleString('en-us', {
+                  style: 'currency',
+                  currency: 'usd',
+                });
               },
               Cell: ({ row }: CellProps<QuoteLine>): JSX.Element => {
                 return (
                   <span
                     className={`${!row.original.enabled ? 'line-through' : ''}`}
                   >
-                    $ {row.values['Line Total']}
+                    {row.values['Line Total']}
                   </span>
                 );
               },
               Footer: (info: any) => {
-                const total = info.rows.reduce((sum: number, row: any) => {
+                if (headerExpired) {
+                  return 'Quote expired \n Please reprice for a new total';
+                }
+
+                const confTotal = info.rows.reduce((sum: number, row: any) => {
                   // console.log(row);
                   return (
-                    parseFloat(
-                      row.values['Line Total'] * row.original.enabled,
-                    ) + sum
+                    row.original.line_total *
+                      row.original.enabled *
+                      Number(row.original.configured) +
+                    sum
                   );
                 }, 0);
-                let quote_date = new Date(header.quote_date);
-                let ship_date = new Date(header.ship_date);
-                let escAfter = new Date(
-                  quote_date.setMonth(quote_date.getMonth() + 1),
-                );
+
+                const stockTotal = info.rows.reduce((sum: number, row: any) => {
+                  // console.log(row);
+                  return (
+                    row.original.line_total *
+                      row.original.enabled *
+                      Number(!row.original.configured) +
+                    sum
+                  );
+                }, 0);
+
+                const total = stockTotal + confTotal;
+
+                // Grab the quote date
+                let quote_date = new Date(header?.quote_date);
+                // Grab the ship date
+                let ship_date = new Date(header?.ship_date);
+
+                // Set current accepted difference before escalation
+                let escAfter = new Date(quote_date);
                 let escValue = 0;
                 let escPercent = 0;
                 let summedVal = total;
 
                 console.log('Init ESC Date to: ', escAfter);
-                escAfter.setMonth(escAfter.getMonth() + 2);
+                escAfter.setMonth(escAfter.getMonth() + 1);
                 console.log('Updated ESC Date to: ', escAfter);
                 console.log(ship_date.getMonth());
                 if (escAfter < ship_date) {
@@ -442,13 +483,15 @@ const QuoteInfoLines = (props: any) => {
                   months = months <= 0 ? 0 : months;
 
                   escPercent = 1.5 * months;
-                  escValue = (total * escPercent) / 100;
+                  // ! ADD if statement to check if configured lines exist
+                  // ! if so then apply ESC to all lines
+                  escValue = (confTotal * escPercent) / 100;
                   summedVal += escValue;
                 }
 
                 return (
                   <>
-                    <div className="flex items-start flex-col">
+                    <div className="flex flex-col items-start">
                       <span>Subtotal: ${total.toFixed(2)}</span>
                       <span>Escalation: ${escValue.toFixed(2)}</span>
                       <span>Total: $ {summedVal.toFixed(2)}</span>
@@ -467,7 +510,7 @@ const QuoteInfoLines = (props: any) => {
           ],
         },
       ].flatMap((c: any) => c.columns), // remove comment to drop header groups
-    [adminEnabled, props.quoteMultiplier],
+    [adminEnabled, props.quoteMultiplier, header?.ship_date, headerExpired],
   );
 
   const data = React.useMemo(() => lines, [lines, header]);
@@ -477,7 +520,7 @@ const QuoteInfoLines = (props: any) => {
       'input-add-line',
     )! as HTMLInputElement;
 
-    if (lineitem.value) {
+    if (lineitem.value && header?.quote_number) {
       // console.log(lineitem.value);
       // ! PATCH ME: Add case for QuoteID is null
       dispatch(
@@ -495,7 +538,7 @@ const QuoteInfoLines = (props: any) => {
   };
 
   return (
-    <div className="flex flex-col flex-1 w-full z-[10] ">
+    <div className="flex flex-col flex-1 w-full mt-3 z-[0] ">
       <div className="flex flex-row justify-between p-3 border rounded-md print:hidden">
         <div className="col">
           <div className="form-group">
@@ -508,7 +551,7 @@ const QuoteInfoLines = (props: any) => {
             </label>
             <div className="rounded-sm input-group new-item">
               <input
-                className="border border-blue-500 form-control"
+                className="px-2 py-1 rounded-md"
                 hidden={!adminEnabled}
                 type="number"
                 step={0.05}
@@ -527,17 +570,18 @@ const QuoteInfoLines = (props: any) => {
               Add A Line
             </label>
 
-            <div className="border border-blue-500 rounded-sm input-group new-item">
+            <div className="flex border rounded-md">
               <input
                 type="text"
-                className="form-control form-control-sm "
+                className="px-2 py-1 rounded-l-md"
                 id="input-add-line"
                 placeholder="Part Num"
                 onKeyPress={(e) => e.key === 'Enter' && handleAddLine(e)}
               />
               <button
-                className="px-1 bg-blue-500 border-l-2 rounded-sm input-group-text btn-primary"
+                className="flex flex-1 px-1 py-1 text-white disabled:bg-gray-400 bg-porter rounded-r-md"
                 type="button"
+                disabled={!header?.quote_number}
                 onClick={handleAddLine}
               >
                 Add
@@ -551,9 +595,9 @@ const QuoteInfoLines = (props: any) => {
               Configure Gyms
             </label>
 
-            <div className="border border-blue-500 rounded-lg input-group new-item">
+            <div className="flex border rounded-md">
               <select
-                className="pl-3 rounded-lg "
+                className="px-2 py-1 bg-white rounded-l-md"
                 aria-label="Default select example"
                 id="input-dw-launch"
               >
@@ -566,8 +610,9 @@ const QuoteInfoLines = (props: any) => {
                 })}
               </select>
               <button
-                className="px-1 input-group-text btn-primary"
+                className="px-1 text-white disabled:bg-gray-400 input-group-text btn-primary bg-porter rounded-r-md"
                 type="button"
+                disabled={!header?.quote_number}
                 onClick={(e) => {
                   e.preventDefault();
 

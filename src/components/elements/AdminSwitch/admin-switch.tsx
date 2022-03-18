@@ -23,10 +23,10 @@ const AdminSwitch = (props: AdminSwitchProps) => {
           onChange={onChange}
         />
       </div> */}
-      <label className="relative flex items-center justify-between p-2 group">
+      <label className=" flex items-center justify-between p-2 group z-10">
         <input
           type="checkbox"
-          className="absolute rounded-md appearance-none -translate-x-1/4 left-1/2 peer"
+          className="absolute z-10 rounded-md appearance-none -translate-x-1/4 left-1/2 peer"
           defaultChecked={adminEnabled}
           onChange={onChange}
         />

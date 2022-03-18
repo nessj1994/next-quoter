@@ -4,7 +4,7 @@ import {
   createSelector,
 } from '@reduxjs/toolkit';
 import initAPIConnection from 'services/api/apiConnector';
-import { AxiosResponse } from 'axios';
+import axios, { AxiosResponse } from 'axios';
 // import moment from 'moment';
 import { QuoteHeaderState, QuoteHeader } from './types';
 // eslint-disable-next-line import/no-cycle
@@ -51,11 +51,14 @@ const quoteSlice = createSlice({
     setEditing: (state, action) => {
       // Set the currently selected quote to edit
       if (action.payload === null) state.currentQuote = null;
-      else if (state.entities[action.payload.quote_id]) {
-        console.log('matched');
-        console.log('Action: ', action.payload);
-        state.currentQuote = state.entities[action.payload.quote_id]!;
+      else {
+        state.currentQuote = action.payload;
       }
+      // else if (state.entities[action.payload.quote_id]) {
+      //   console.log('matched');
+      //   console.log('Action: ', action.payload);
+      //   state.currentQuote = state.entities[action.payload.quote_id]!;
+      // }
     },
     ageChoiceUpdated: (state, action) => {
       state.fetchFilters.age = action.payload.age;
@@ -74,29 +77,45 @@ export const fetchQuotes =
     customer_id: string,
     csr = '',
     age = 90,
-    includeDeleted = false,
     page = 1,
     pageSize = 10,
-    filters,
+    filters = {
+      private: false,
+      deleted: false,
+      expired: false,
+      converted: false,
+      search: { searchString: '', searchField: 'ship_name' },
+    },
   ) =>
   async (dispatch: any) => {
+    // convert the age to the correct format
     const convertedAge = moment()
       .subtract(age, 'days')
       .format('YYYY-MM-DD HH:MM:ss');
+
+    // Set the loading state
     dispatch(setLoading(true));
-    console.log('Fetch quotes was passed the following for csr: ', csr);
+
+    // Empty the list to prepare for new data.
     await dispatch(emptyQuoteList());
-    let url = `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/?cust_id=${customer_id}&quote_date__gte=${convertedAge}&page=${page}&page_size=${pageSize}`;
-    if (csr) url += `&quote_user=${csr}`;
-    console.log(filters);
-    filters?.map((filter) => {
-      console.log('Filter: ', filter);
-      if (filter.id === 'Quote #') {
-        url += `&quote_number__contains=${filter.value}`;
-      } else if (filter.id === 'Ship To') {
-        url += `&ship_name__contains=${filter.value}`;
-      }
-    });
+
+    // Create the base URL
+    let url = `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/?quote_date__gte=${convertedAge}&page=${page}&page_size=${pageSize}`;
+
+    // Apply each filter to the URL
+    if (customer_id !== '') url += `&cust_id=${customer_id}`;
+    if (csr) url += `&quote_user=${csr}`; // Which User the quote is for
+    if (!filters.private) url += '&private=false';
+    if (!filters.deleted) url += '&deleted=false'; // Include only quotes that are not marked deleted
+    if (!filters.expired)
+      url += `&expire_date__gte=${moment(new Date()).format(
+        'YYYY-MM-DD HH:MM:ss',
+      )}`; // Include only quotes that have an expiration date in the future
+    if (!filters.converted) url += '&converted=false'; // Include only quotes that are note converted
+
+    if (filters.search.searchString !== '') {
+      url += `&${filters.search.searchField}__contains=${filters.search.searchString}`;
+    }
     const response: AxiosResponse<any, any> = await api.get(url, {
       withCredentials: true,
     });
@@ -121,8 +140,8 @@ export const searchQuotes = (quote_num: string) => async (dispatch: any) => {
   return response.data;
 };
 
-export const fetchCsrList = () => async (dispatch: any) => {
-  const url = `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/users/coworkers/`;
+export const fetchCsrList = (customerID: number) => async (dispatch: any) => {
+  const url = `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/users/get_by_customer_id/${customerID}`;
   const response = await api.get(url, {
     withCredentials: true,
   });

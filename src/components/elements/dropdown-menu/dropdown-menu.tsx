@@ -1,3 +1,5 @@
+/* eslint-disable react/jsx-key */
+
 import React, { useState, useEffect } from 'react';
 // import './dropdown-menu.scss';
 
@@ -58,7 +60,7 @@ const Dropdown = (props: DropdownProps) => {
           {item.itemLabel}
         </a> */}
               <Component
-                className="text-gray-700 block px-4 py-2 text-sm "
+                className="block px-4 py-2 text-sm text-gray-700 "
                 href={item.linkPath}
                 onClick={(e) => {
                   e.preventDefault();

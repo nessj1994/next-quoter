@@ -31,6 +31,7 @@ const DateField: React.FC<FieldAttributes<{}>> = ({ ...props }) => {
         previousMonthButtonLabel="<"
         selected={field.value ? new Date(field.value) : ''}
         onChange={handleChange}
+        disabled={props.disabled}
       />
 
       <div className="text-red-500 feedback">

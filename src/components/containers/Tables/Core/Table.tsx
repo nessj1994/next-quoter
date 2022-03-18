@@ -1,5 +1,6 @@
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable no-nested-ternary */
+/* eslint-disable react/display-name */
 
 import React, {
   PropsWithChildren,
@@ -62,7 +63,7 @@ function DefaultColumnFilter({
       onChange={(e) => {
         setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
       }}
-      className="filter"
+      className="filter custom-input"
       placeholder={`Search`}
     />
   );
@@ -286,7 +287,7 @@ function Table<T extends Record<string, unknown>>(
                         {...column.getHeaderProps(headerProps)}
                       >
                         {/* contain our header and sort icon */}
-                        <div className="flex flex-1 justify-between overflow-hidden">
+                        <div className="flex justify-between flex-1 overflow-hidden">
                           {column.render('Header')}
                           {column.canSort && (
                             <div className="inline-flex justify-end">

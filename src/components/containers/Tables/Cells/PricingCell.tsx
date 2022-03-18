@@ -81,7 +81,7 @@ function PricingCell({
 
   return (
     <>
-      <div className="container-fluid print:hidden">
+      <div className="container flex flex-col justify-start print:hidden">
         <div>
           <label htmlFor="price-method">Method</label>
           <select
@@ -97,10 +97,7 @@ function PricingCell({
           </select>
         </div>
         {initialValue !== 1 && initialValue !== '1' ? (
-          <div
-            key={`line-multiplier-${original.line_number}`}
-            className="container"
-          >
+          <div key={`line-multiplier-${original.line_number}`} className="">
             <label htmlFor="multiplier">Multiplier</label>
             <input
               id="line-multiplier"
@@ -113,12 +110,12 @@ function PricingCell({
             />
           </div>
         ) : (
-          <div key={`man-price-${original.line_number}`} className="container">
+          <div key={`man-price-${original.line_number}`} className="">
             <label htmlFor="man-price">Price</label>
             <input
               id="man-price"
               className="text-black custom-input w-100"
-              defaultValue={value.manual_price}
+              defaultValue={Number(value.manual_price).toFixed(2)}
               onChange={onChangeManualPrice}
             />
           </div>

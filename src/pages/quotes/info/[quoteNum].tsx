@@ -8,6 +8,7 @@ import {
   fetchLines,
   updateHeader,
   getAdminEnabled,
+  emptyLines,
 } from 'store';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks/hooks';
 import QuoteInfoLines from '../../../components/containers/QuoteLines/index';
@@ -15,7 +16,7 @@ import QuoteInfoHeader from '../../../components/containers/QuoteHeader/index';
 // import embedHFWidget from '../../components/presentational/Happy-Fox-Embed/happy-fox-widget-embed';
 import selectQuoteByQuoteNum from '../../../utils/selectQuoteByNum';
 import { getSession, useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
+import router, { useRouter } from 'next/router';
 import { dispatch } from 'react-hot-toast/dist/core/store';
 
 // QuoteInfoPage component
@@ -51,6 +52,17 @@ const QuoteInfoPage: NextPage = (pageProps) => {
           session.data?.user?.customer_id,
           session.data?.user?.username,
           90,
+          1,
+          10,
+          {
+            expired: true,
+            converted: true,
+            deleted: true,
+            search: {
+              searchString: quoteNum?.toString() ?? '',
+              searchField: 'quote_num',
+            },
+          },
         ),
       );
     };
@@ -102,7 +114,7 @@ const QuoteInfoPage: NextPage = (pageProps) => {
       // No longer mounted
       mounted = false;
     };
-  }, [dispatch, currQuote, headers, quoteNum]);
+  }, [dispatch, headers, quoteNum]);
 
   // Quote overall multiplier field value
   const [quoteMultiplier, setQuoteMultiplier] = useState(() => {
@@ -115,7 +127,7 @@ const QuoteInfoPage: NextPage = (pageProps) => {
   };
 
   return (
-    <div className="flex flex-col flex-shrink w-full min-h-full gap-3 p-3 bg-white ">
+    <div className="flex flex-col w-full">
       <QuoteInfoHeader {...pageProps} quote={currQuote} adminEnabled={false} />
 
       <QuoteInfoLines
@@ -130,15 +142,5 @@ const QuoteInfoPage: NextPage = (pageProps) => {
 };
 
 QuoteInfoPage.auth = true;
-
-// // * Load session from nextauth provider before displaying page
-// export const getServerSideProps: GetServerSideProps = async (context) => {
-//   // context.store?.dispatch(setEditing(800221));
-//   return {
-//     props: {
-//       session: await getSession(context),
-//     },
-//   };
-// };
 
 export default QuoteInfoPage;

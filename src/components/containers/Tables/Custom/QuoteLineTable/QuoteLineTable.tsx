@@ -1,5 +1,6 @@
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable no-nested-ternary */
+/* eslint-disable react/display-name */
 
 import React, {
   PropsWithChildren,
@@ -27,7 +28,7 @@ import {
   TableState,
   FilterProps,
 } from 'react-table';
-import { camelToWords, useDebounce } from 'utils';
+import { camelToWords, debounce, useDebounce } from 'utils';
 import { FuzzyText, NumericText } from '../../Filters';
 // import ResizeHandle from '../ResizeHandle';
 import {
@@ -35,8 +36,17 @@ import {
   ArrowUpIcon,
   ArrowRightIcon,
 } from '@heroicons/react/outline';
-import { TableProperties } from '../types';
-import { QuoteLine, useAppSelector, editing } from 'store';
+import {
+  QuoteLine,
+  useAppSelector,
+  editing,
+  toggleGymLock,
+  QuoteHeader,
+  useAppDispatch,
+} from 'store';
+import Link from 'next/link';
+import { TableProperties } from '../../types';
+import { LockClosedIcon, LockOpenIcon } from '@heroicons/react/solid';
 
 const DefaultHeader: React.FC<HeaderProps<any>> = ({ column }: any) => (
   <>
@@ -129,6 +139,8 @@ function QuoteLineTable<T extends Record<string, unknown>>(
   } = props;
   const header = useAppSelector(editing);
 
+  const dispatch = useAppDispatch();
+
   // Memo-ized defaultColumn object
   const defaultColumn = React.useMemo(
     () => ({
@@ -182,6 +194,11 @@ function QuoteLineTable<T extends Record<string, unknown>>(
     state,
   } = instance;
 
+  const handleLock = debounce((quote: number, gym: number) => {
+    console.log(quote);
+    let data = dispatch(toggleGymLock(quote, gym));
+    console.log('locking: ', gym);
+  }, 300);
   // Prevents render from ocurring too many extra times. Visual examples of this available online
   const debouncedState = useDebounce(state, 500);
 
@@ -206,7 +223,7 @@ function QuoteLineTable<T extends Record<string, unknown>>(
       return (
         <tr
           {...rowProps}
-          className="table-row gap-1 border-b-2 row hover:bg-blue-500 hover:text-white hover:bg-opacity-90"
+          className="items-center table-row gap-1 border-b-2 row hover:bg-blue-500 hover:text-white hover:bg-opacity-90"
         >
           {row.cells.map((cell) => {
             return cell.column.hideHeader ? null : (
@@ -344,29 +361,46 @@ function QuoteLineTable<T extends Record<string, unknown>>(
                         className="table-row gap-1 row print:gap-0"
                         key={`gym-header-${row.original.ac_gym_id}`}
                       >
-                        <div className="flex items-center w-full h-12 gap-3 bg-gray-100">
-                          <td className="flex w-48">
-                            {adminSetting ? (
-                              <button
-                                disabled
-                                className="w-24 bg-white border rounded-md disabled:pointer-events-none disabled:bg-gray-200 hover:bg-porter hover:text-white"
-                              >
-                                Lock
-                              </button>
-                            ) : null}
+                        <div className="flex items-center justify-end w-full h-12 gap-3 bg-gray-100 ">
+                          <td className="flex ">
+                            <button
+                              disabled={!adminSetting}
+                              onClick={() => {
+                                handleLock(
+                                  row.original.quote_id,
+                                  row.original.ac_gym_id,
+                                );
+                              }}
+                              className="p-1 ml-1 bg-gray-200 rounded-full hover:bg-white disabled:pointer-events-none active:ring-porter-light active:ring disabled:bg-gray-200 "
+                            >
+                              {row.original.gym_lock ? (
+                                <LockClosedIcon
+                                  height={24}
+                                  width={24}
+                                  className="text-rose-600"
+                                />
+                              ) : (
+                                <LockOpenIcon
+                                  height={24}
+                                  width={24}
+                                  className="text-porter"
+                                />
+                              )}
+                            </button>
                           </td>
-                          <td className="w-1/3 font-semibold capitalize">
+                          <td className="flex w-1/3 font-semibold capitalize">
                             Gym {currGym}
                           </td>
                           <td className="flex justify-end w-full mr-3 first-line:flex-1">
-                            <button
-                              className="w-32 bg-white border rounded-md hover:bg-porter hover:text-white"
-                              onClick={() => {
-                                window.location.href = `https://driveworks.litaniasports.com/Integration?User=jness&Run=Gym&Transition=edit&Specification=${header.quote_number}-Gym${currGym}`;
-                              }}
-                            >
-                              Edit
-                            </button>
+                            {!row.original.gym_lock ? (
+                              <Link
+                                href={`https://driveworks.litaniasports.com/Integration?User=jness&Run=Gym&Transition=edit&Specification=${header.quote_number}-Gym${row.original.ac_gym_id}`}
+                              >
+                                <a className="px-3 text-center bg-white border rounded-md center px-auto hover:bg-porter hover:text-white">
+                                  Edit
+                                </a>
+                              </Link>
+                            ) : null}
                           </td>
                         </div>
                       </tr>
@@ -395,7 +429,7 @@ function QuoteLineTable<T extends Record<string, unknown>>(
                     return !column.hideHeader ? (
                       <td
                         {...column.getHeaderProps(footerProps)}
-                        className="px-4 py-2 mx-auto overflow-hidden text-xs font-medium tracking-wider text-center text-gray-500 uppercase overflow-ellipsis col-span "
+                        className="px-4 py-2 mx-auto overflow-hidden text-sm font-bold tracking-wider text-center text-gray-500 uppercase overflow-ellipsis col-span "
                       >
                         {!column.hideFooter && column.render('Footer')}
                       </td>

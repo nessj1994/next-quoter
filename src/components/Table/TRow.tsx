@@ -7,7 +7,7 @@ const TableRow: FC<any> = (props: PropsWithChildren<any>) => {
 
   return (
     <tr
-      className="table-row gap-1 py-3 border-b-2 row hover:bg-blue-500 hover:text-white hover:bg-opacity-90"
+      className="table-row gap-1 py-2 border-b-2 row hover:bg-blue-500 hover:text-white hover:bg-opacity-90"
       {...row.getRowProps()}
     >
       {children}

@@ -10,6 +10,7 @@ import {
   TableInstance,
   Hooks,
   useColumnOrder,
+  useGlobalFilter,
   useFilters,
   useGroupBy,
   useSortBy,
@@ -37,7 +38,7 @@ interface TableProps<T extends Record<string, unknown>>
   onClick?: (row: Row<T>) => void;
   updateData?: (props: any) => void;
   fetchData?: (...args: any) => void;
-  toolbarPlugin?: React.ReactNode;
+  toolbarPlugin?: () => JSX.Element;
 
   controlledPageCount: number;
   skipPageReset?: boolean;
@@ -61,7 +62,7 @@ function DefaultColumnFilter({
       onChange={(e) => {
         setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
       }}
-      className="filter"
+      className="filter custom-input"
       placeholder={`Search`}
     />
   );
@@ -72,13 +73,9 @@ const configureClassNames = (props, column) => {
   return [
     props,
     {
-      className: `flex text-${column.align} flex-col justify-${
-        column.align === 'center'
-          ? 'center'
-          : column.align === 'right'
-          ? 'end'
-          : 'start'
-      } ${column.hide ? 'hidden' : ''}`,
+      className: ` text-${column.align} 
+      
+      ${column.hide ? 'hidden' : ''}`,
     },
   ];
 };
@@ -113,6 +110,7 @@ export function WrappedTable<T extends Record<string, unknown>>(
   // Array containing all the hooks we want the table to use
   const hooks: ((hooks: Hooks<any>) => void)[] = [
     useColumnOrder,
+    useGlobalFilter,
     useFilters,
     useGroupBy,
     useSortBy,
@@ -145,6 +143,7 @@ export function WrappedTable<T extends Record<string, unknown>>(
       initialState: { pageIndex: 0, pageSize: 10 },
       manualPagination: true,
       manualFilters: true,
+      manualGlobalFilter: true,
       pageCount: controlledPageCount,
       autoResetPage: false,
     },
@@ -158,7 +157,8 @@ export function WrappedTable<T extends Record<string, unknown>>(
     headerGroups,
     pageCount,
     gotoPage,
-    state: { pageIndex, pageSize, filters },
+    setGlobalFilter,
+    state: { pageIndex, pageSize, filters, globalFilter },
   } = tableInstance;
 
   React.useEffect(() => {
@@ -170,6 +170,7 @@ export function WrappedTable<T extends Record<string, unknown>>(
     if (filters[0]) filter = filters[0].value;
     console.log('FILTERS: ', filters);
     console.log(filter);
+    console.log(globalFilter);
     if (mounted) {
       fetchData({
         pageIndex: fetchIndex,
@@ -195,63 +196,77 @@ export function WrappedTable<T extends Record<string, unknown>>(
     };
   }, [controlledCSR, controlledAgeFilter]);
 
+  const Toolbar = props.toolbarPlugin ?? null;
+
   return (
     <TableContext.Provider value={tableInstance}>
-      {/* Conditionally add Toolbar */}
-      {props.toolbarPlugin && props.toolbarPlugin}
-      {/* <Toolbar />  */}
-      <div className="my-3 overflow-x-auto bg-white bg-opacity-50 rounded-lg shadow-lg print:border-none print:m-0 print:overflow-visible">
-        <Table {...getTableProps()}>
-          <THead>
-            {headerGroups?.map((headerGroup, index) => {
-              return (
-                <tr
-                  {...headerGroup.getHeaderGroupProps()}
-                  key={`header-group-${index}`}
-                >
-                  {headerGroup.headers.map((column) => {
-                    return (
-                      <th
-                        key={`column-${column.id}`}
-                        {...column.getHeaderProps(headerProps)}
-                      >
-                        <p className="text-porter">{column.render('Header')}</p>
-                        <div className="overflow-hidden">
-                          {column.canFilter && column.render('Filter')}
-                        </div>
-                      </th>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </THead>
-          <TBody>
-            {page.map((row, i) => {
-              prepareRow(row);
-              return (
-                <TableRow key={`row-${i}`} row={row}>
-                  {row.cells.map((cell, i) => {
-                    return (
-                      <td
-                        key={`cell-${i}`}
-                        className={`flex py-3 font-sans col whitespace-nowrap `}
-                        {...cell.getCellProps(cellProps)}
-                      >
-                        {cell.render('Cell')}
-                      </td>
-                    );
-                  })}
-                </TableRow>
-              );
-            })}
-          </TBody>
-          {/* 
+      <div className="flex flex-col flex-1 gap-3 ">
+        {/* Conditionally add Toolbar */}
+        <Toolbar />
+        <div className="block my-2 overflow-x-auto bg-white bg-opacity-50 rounded-lg shadow-lg print:border-none print:m-0 print:overflow-visible">
+          <Table {...getTableProps()}>
+            <THead>
+              {headerGroups?.map((headerGroup, index) => {
+                return (
+                  <tr
+                    {...headerGroup.getHeaderGroupProps()}
+                    key={`header-group-${index}`}
+                  >
+                    {headerGroup.headers.map((column) => {
+                      return (
+                        <th
+                          className={`px-6 py-4 text-left text-xs ${`min-w-[${
+                            column.minWidth ?? 0
+                          }px]`}                     
+                        ${`max-w-[${column.maxWidth ?? 0}px]`}
+                        font-bold  uppercase tracking-wider`}
+                          key={`column-${column.id}`}
+                          {...column.getHeaderProps(headerProps)}
+                        >
+                          <h1 className="py-2 text-sm text-porter">
+                            {column.render('Header')}
+                          </h1>
+                          {column.canFilter && (
+                            <div className="overflow-hidden">
+                              {column.render('Filter')}
+                            </div>
+                          )}
+                        </th>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </THead>
+            <TBody>
+              {page.map((row, i) => {
+                prepareRow(row);
+                return (
+                  <TableRow key={`row-${i}`} row={row}>
+                    {row.cells.map((cell, i) => {
+                      return (
+                        <td
+                          key={`cell-${i}`}
+                          className={`px-6  whitespace-nowrap text-porter-light `}
+                          {...cell.getCellProps(cellProps)}
+                        >
+                          {cell.render('Cell', {
+                            ...cell.getCellProps(cellProps),
+                          })}
+                        </td>
+                      );
+                    })}
+                  </TableRow>
+                );
+              })}
+            </TBody>
+            {/* 
           includeFooter && 
           <TFooter />
          */}
-        </Table>
-        <Pagination />
+          </Table>
+          <Pagination />
+        </div>
       </div>
     </TableContext.Provider>
   );

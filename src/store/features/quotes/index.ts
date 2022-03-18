@@ -27,6 +27,7 @@ import {
 import {
   linesSliceReducer,
   fetchLines,
+  toggleGymLock,
   retrieveFile,
   processGyms,
   updateLine,
@@ -75,4 +76,5 @@ export {
   addComponent,
   markQuoteDeleted,
   getQuotesState,
+  toggleGymLock,
 };

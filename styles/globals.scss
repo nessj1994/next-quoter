@@ -55,11 +55,12 @@ a {
 }
 
 .custom-input {
-  @apply block w-full text-base md:text-sm bg-white border border-gray-300 rounded shadow-sm form-input;
+  @apply block w-full  md:text-sm bg-white border border-gray-300 rounded shadow-sm form-input;
 }
 
 @import '../src/components/containers/Tables/Core/table-styles';
 @import '../src/components/containers/Navbar/styles';
+@import '../src/components/containers/Layout/styles';
 
 @tailwind base;
 @tailwind components;

@@ -79,8 +79,8 @@ export const fetchLines = (quoteID: number) => async (dispatch: any) => {
       { withCredentials: true },
     );
 
-  console.log(data.results);
-  await dispatch(loadLines(data.results));
+  console.log(data);
+  await dispatch(loadLines(data));
   dispatch(setLoading(false));
   return data.results;
 };
@@ -120,6 +120,7 @@ export const retrieveFile =
     return content;
   };
 
+// TODO: Move this to headerSlice
 export const processGyms =
   (quoteNum: string, gymNum: number) => async (dispatch: any) => {
     const response = await api.post(
@@ -130,6 +131,22 @@ export const processGyms =
     // ! Theoretically we can just add the lines, and remove / replace any that were edited, but for now reloading is easier.
     dispatch(removeAll());
     // dispatch(addLines(response.data));
+    return response;
+  };
+
+export const toggleGymLock =
+  (quoteID: number, gym: number) => async (dispatch: any) => {
+    const url = `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/lines/toggle_gym_lock/`;
+
+    const response = await api.post(
+      url,
+      { quote_id: quoteID, gym_id: gym },
+      { withCredentials: true },
+    );
+
+    console.log(response);
+
+    dispatch(addLines(response.data.data));
     return response;
   };
 
@@ -190,17 +207,17 @@ export const addNewLine =
       enabled: true,
     };
 
-    const { data: lineData }: AxiosResponse<QuoteLine[], any> = await api.post(
+    const response: AxiosResponse<QuoteLine[], any> = await api.post(
       `${process.env.NEXT_PUBLIC_SERVER_HOST}/inferno/v1/quotes/headers/${line.quoteID}/add_line/`,
       { ...requestBody },
       { withCredentials: true },
     );
 
-    let arr = [lineData];
+    let arr = [response.data.lines];
 
-    console.log(...arr);
-    if (lineData) {
-      dispatch(addLines(lineData));
+    console.log(response.data.lines);
+    if (response.data.lines) {
+      dispatch(addLines(response.data.lines));
     }
   };
 
@@ -227,7 +244,7 @@ export const removeLine = (lineID: number) => async (dispatch: any) => {
 };
 
 export const emptyLines = () => async (dispatch: any) => {
-  dispatch(removeAll());
+  await dispatch(removeAll());
 };
 
 export const addComponent =

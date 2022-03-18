@@ -40,7 +40,7 @@ function MarginCell(props: CellProps<QuoteLine>) {
   }
   return (
     <div
-      className={`${enabled ? '' : 'line-through'}`}
+      className={`container ${enabled ? '' : 'line-through'}`}
       style={{
         whiteSpace: 'nowrap',
         textOverflow: 'ellipsis',

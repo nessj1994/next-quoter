@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import { NextPage } from 'next';
 import addSalt from '../../utils/salt-shaker';
 import { Formik, Form, FormikErrors } from 'formik';
